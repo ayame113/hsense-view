@@ -59,14 +59,14 @@ async function handleHttpRequest(request: Request) {
             });
           }
         } catch (error) {
-          console.log(error);
+          console.error(pathname, error);
           return createResponse({ status: 500 });
         }
       } catch (error) {
         if (
           !(error instanceof TypeError)
         ) {
-          console.log(error);
+          console.error(url.pathname, error);
           return createResponse({ status: 500 });
         }
       }
@@ -84,7 +84,7 @@ async function handleHttpRequest(request: Request) {
     }
     return createResponse({ status: 404 });
   } catch (error) {
-    console.log(error);
+    console.error(request.url, error);
     return createResponse({ status: 500 });
   }
 }
@@ -104,7 +104,7 @@ async function handleWebSocketRequst(request: Request) {
     }
     return createResponse({ status: 404 });
   } catch (error) {
-    console.log(error);
+    console.error(request.url, error);
     return createResponse({ status: 500 });
   }
 }
