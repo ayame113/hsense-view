@@ -125,7 +125,9 @@ export function startServer() {
 
   return { server, controller };
 }
-
+for await (const item of Deno.readDir(".")) {
+  console.log(item);
+}
 if (import.meta.main) {
   startServer();
 }
