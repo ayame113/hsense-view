@@ -45,16 +45,6 @@ async function handleHttpRequest(request: Request) {
         if (pathname.at(-1) === "/") {
           pathname += "index.html";
         }
-        try {
-          const resres = await fetch(
-            new URL(`./static${pathname}`, import.meta.url),
-          );
-          console.log(resres);
-          console.log(await resres.text());
-        } catch (error) {
-          console.log(error);
-        }
-
         const response = await fetch(
           new URL(`./static${pathname}`, import.meta.url),
         );
@@ -74,8 +64,7 @@ async function handleHttpRequest(request: Request) {
         }
       } catch (error) {
         if (
-          !(error instanceof TypeError ||
-            error instanceof Deno.errors.PermissionDenied)
+          !(error instanceof TypeError)
         ) {
           console.log(error);
           return createResponse({ status: 500 });
