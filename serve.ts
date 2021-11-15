@@ -125,6 +125,9 @@ export function startServer() {
 
   return { server, controller };
 }
+console.log("cwd", Deno.cwd());
+console.log("imu", import.meta.url);
+
 for await (const item of Deno.readDir(".")) {
   console.log(item);
 }
