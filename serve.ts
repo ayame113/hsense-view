@@ -45,7 +45,11 @@ async function handleHttpRequest(request: Request) {
         if (pathname.at(-1) === "/") {
           pathname += "index.html";
         }
-        console.log(new URL(`./static${pathname}`, import.meta.url));
+        console.log(
+          await Deno.readTextFile(
+            new URL(`./static${pathname}`, import.meta.url),
+          ),
+        );
 
         const response = await fetch(
           new URL(`./static${pathname}`, import.meta.url),
