@@ -45,11 +45,11 @@ async function handleHttpRequest(request: Request) {
         if (pathname.at(-1) === "/") {
           pathname += "index.html";
         }
-        console.log(
-          await (await fetch(
-            new URL(`./static${pathname}`, import.meta.url),
-          )).text(),
+        const resres = await fetch(
+          new URL(`./static${pathname}`, import.meta.url),
         );
+        console.log(resres);
+        console.log(await resres.text());
 
         const response = await fetch(
           new URL(`./static${pathname}`, import.meta.url),
