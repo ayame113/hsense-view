@@ -132,7 +132,7 @@ for await (const item of Deno.readDir(".")) {
   console.log(item);
 }
 console.log(await Deno.readFile("/src/serve.ts"));
-console.log(await fetch("file:///src/serve.ts"));
+console.log(await fetch("/src/serve.ts"));
 
 if (import.meta.main) {
   startServer();
