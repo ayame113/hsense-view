@@ -1,0 +1,38 @@
+export class Router {
+    #stringKey;
+    #URLPatternKey;
+    constructor(){
+        this.#stringKey = {
+        };
+        this.#URLPatternKey = [];
+    }
+    set(key, handler) {
+        if (key instanceof URLPattern) {
+            this.#URLPatternKey.push([key, handler]);
+        } else {
+            if (key in this.#stringKey) {
+                throw new Error(`cannot set duplicate handler: ${key}`);
+            }
+            this.#stringKey[key] = handler;
+        }
+    }
+    get(requestUrl) {
+        const { pathname  } = requestUrl;
+        if (this.#stringKey[pathname]) {
+            return {
+                handler: this.#stringKey[pathname]
+            };
+        }
+        for (const [pattern, handler] of this.#URLPatternKey){
+            const match = pattern.exec(requestUrl);
+            if (match) {
+                return {
+                    handler,
+                    match
+                };
+            }
+        }
+        return {
+        };
+    }
+}

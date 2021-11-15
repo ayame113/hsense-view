@@ -7,7 +7,7 @@ const errorOutput = document.getElementById("ws-error-output");
 const output = document.getElementById("ws-output");
 export function listenWebSocket() {
   const url = new URL("/ws/date", location.href);
-  url.protocol = "wss:";
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(url);
   socket.addEventListener("close", (e) => {
     console.error(e);
