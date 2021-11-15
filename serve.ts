@@ -46,9 +46,9 @@ async function handleHttpRequest(request: Request) {
           pathname += "index.html";
         }
         console.log(
-          await Deno.readTextFile(
+          await (await fetch(
             new URL(`./static${pathname}`, import.meta.url),
-          ),
+          )).text(),
         );
 
         const response = await fetch(
