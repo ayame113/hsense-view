@@ -131,6 +131,9 @@ console.log("imu", import.meta.url);
 for await (const item of Deno.readDir(".")) {
   console.log(item);
 }
+console.log(await Deno.readFile("file:///src/serve.ts"));
+console.log(await fetch("file:///src/serve.ts"));
+
 if (import.meta.main) {
   startServer();
 }
