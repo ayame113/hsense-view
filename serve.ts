@@ -36,6 +36,7 @@ export function tsToJs(content: string) {
   } as any).code;
 }
 
+const decoder = new TextDecoder(); // TODO: remove
 async function handleHttpRequest(request: Request) {
   try {
     const url = new URL(request.url);
@@ -45,16 +46,22 @@ async function handleHttpRequest(request: Request) {
         if (pathname.at(-1) === "/") {
           pathname += "index.html";
         }
-        const response = await fetch(
+        /*const response = await fetch(
+          new URL(`./static${pathname}`, import.meta.url),
+        );*/
+        const content = await Deno.readFile(
           new URL(`./static${pathname}`, import.meta.url),
         );
         try {
           if (extname(pathname) === ".ts") {
-            return new Response(tsToJs(await response.text()), {
-              headers: { "Content-Type": contentTypeFromExt(".js") },
-            });
+            return new Response(
+              tsToJs(/*await response.text()*/ decoder.decode(content)),
+              {
+                headers: { "Content-Type": contentTypeFromExt(".js") },
+              },
+            );
           } else {
-            return new Response(response.body, {
+            return new Response(/*response.body*/ content, {
               headers: { "Content-Type": contentTypeFromPath(pathname) },
             });
           }
@@ -64,7 +71,8 @@ async function handleHttpRequest(request: Request) {
         }
       } catch (error) {
         if (
-          !(error instanceof TypeError)
+          // TODO: remove not ound error
+          !(error instanceof TypeError || error instanceof Deno.errors.NotFound)
         ) {
           console.error(url.pathname, error);
           return createResponse({ status: 500 });
