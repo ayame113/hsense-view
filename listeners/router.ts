@@ -1,5 +1,6 @@
 import type { Status } from "https://deno.land/std@0.114.0/http/mod.ts";
 import { Router } from "../static/utils/router.ts";
+import type { html } from "../static/utils/domtag.ts";
 
 type PromiseOrValue<T> = T | Promise<T>;
 
@@ -17,11 +18,11 @@ type RouterArg = {
 };
 export type RouterResult = PromiseOrValue<
   {
-    body: BodyInit;
+    body: BodyInit | ReturnType<typeof html>;
     status?: Status;
     type?: Extension;
   } | {
-    body?: BodyInit;
+    body?: BodyInit | ReturnType<typeof html>;
     status: Status;
     type?: Extension;
   }

@@ -6,6 +6,7 @@ import { transform } from "https://deno.land/x/swc@0.1.4/mod.ts";
 import "./listeners/mod.ts";
 import { router, socketRouter } from "./listeners/router.ts";
 import type { Extension, RouterResult } from "./listeners/router.ts";
+import { DomTag } from "./static/utils/domtag.ts";
 
 function contentTypeFromPath(path: string) {
   return contentType(extname(path) ?? ".txt") ?? "text/plain; charset=utf-8";
@@ -16,6 +17,7 @@ function contentTypeFromExt(extension?: Extension) {
 
 async function createResponse(src: RouterResult) {
   let { body, status, type } = await src;
+  body = body instanceof DomTag ? body.toString() : body;
   body ||= `${status} ${STATUS_TEXT.get(status ?? 200)}`;
   return new Response(body, {
     status,
