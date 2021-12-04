@@ -1,12 +1,18 @@
+import { Deferred, deferred } from "https://deno.land/std@0.116.0/async/mod.ts";
 import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 
-// @deno-types="https://cdn.esm.sh/v58/firebase@9.4.1/app/dist/app/index.d.ts"
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.4.1/firebase-app.js";
-// @deno-types="https://cdn.esm.sh/v58/firebase@9.4.1/database/dist/database/index.d.ts"
+// @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
 import {
-  child,
+  deleteApp,
+  FirebaseApp,
+  FirebaseOptions,
+  initializeApp,
+} from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+// @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/database/dist/database/index.d.ts"
+import {
   Database,
   DatabaseReference,
+  enableLogging,
   endAt,
   get,
   getDatabase,
@@ -17,22 +23,107 @@ import {
   ref,
   remove,
   runTransaction,
-} from "https://www.gstatic.com/firebasejs/9.4.1/firebase-database.js";
+  set,
+} from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
 
 import { hash } from "./utils.ts";
 
-export class FirebaseRealtimeDatabase {
+const DEFAULT_TIMEOUT = 120000;
+
+/**
+ * firebase appの死活監視をするクラス
+ * dbプロパティに一定期間アクセスが無い場合は接続を切断する
+ */
+class FirebaseResources {
+  #options: FirebaseOptions;
+  #app: FirebaseApp;
   #db: Database;
-  constructor(...options: Parameters<typeof initializeApp>) {
-    const app = initializeApp(...options);
-    this.#db = getDatabase(app);
+  #wakeUpTimeoutId?: number;
+  #wakeUpTimeout: number;
+  #awake: boolean;
+  #destructPromise: Deferred<void>;
+  constructor(options: FirebaseOptions, { timeout }: { timeout: number }) {
+    this.#options = options;
+    this.#wakeUpTimeout = timeout;
+    // wake up
+    this.#app = initializeApp(options);
+    this.#db = getDatabase(this.#app);
+    this.#awake = true;
+    this.#destructPromise = deferred();
+  }
+  get db() {
+    this.#wakeUp();
+    return this.#db;
+  }
+  #wakeUp() {
+    if (!this.#awake) {
+      // wake up
+      this.#app = initializeApp(this.#options);
+      this.#db = getDatabase(this.#app);
+      this.#awake = true;
+      this.#destructPromise = deferred();
+    }
+    clearTimeout(this.#wakeUpTimeoutId);
+    this.#wakeUpTimeoutId = setTimeout(
+      () => this.destructor(),
+      this.#wakeUpTimeout,
+    );
+  }
+  async destructor() {
+    if (this.#awake) {
+      this.#awake = false;
+      this.#destructPromise.resolve();
+      await deleteApp(this.#app);
+    }
+  }
+  /**
+   * リソースに値を紐づける
+   * deleteAppされた場合に紐づけた値を適切に破棄する
+   * 再度createAppされた場合に紐づけた値を再取得する
+   * オブジェクトは返り値の関数
+   * @param fn 紐付けする値を返す関数
+   * @returns この関数を呼ぶと紐付けした値が返ってくる
+   */
+  link<T>(fn: (resources: FirebaseResources) => T): () => T {
+    this.#wakeUp();
+    let val = fn(this);
+    let shouldReloadVal = false;
+    this.#destructPromise.then(() => shouldReloadVal = true);
+    return () => {
+      this.#wakeUp();
+      if (shouldReloadVal) {
+        val = fn(this);
+        shouldReloadVal = false;
+        this.#destructPromise.then(() => shouldReloadVal = true);
+      }
+      return val;
+    };
+  }
+}
+
+export class FirebaseRealtimeDatabase {
+  #resources: FirebaseResources;
+  constructor(
+    options: FirebaseOptions,
+    { logging = false, timeout = DEFAULT_TIMEOUT }: {
+      logging?: boolean;
+      timeout?: number;
+    } = {},
+  ) {
+    if (logging) {
+      enableLogging(console.log);
+    }
+    this.#resources = new FirebaseResources(options, { timeout });
+  }
+  async cleanUp() {
+    await this.#resources.destructor();
   }
   /**
    * idに紐づいた一意なトークンを返します。トークンをハッシュ化した値がDBに格納されます。
    * 既に紐づいたトークンが存在している場合はnullを返します。
    */
   async createToken(id: string): Promise<string | null> {
-    const dataRef = ref(this.#db, `tokenList/${id}`);
+    const dataRef = ref(this.#resources.db, `tokenList/${id}`);
     let result: string | null = null;
     const token = crypto.randomUUID();
     const hashedToken = await hash(token);
@@ -52,7 +143,7 @@ export class FirebaseRealtimeDatabase {
   /** idとトークンの組み合わせが正しいか照合します。 */
   async testToken(id: string, token: string): Promise<boolean> {
     const [res, expectedHashedToken] = await Promise.all([
-      get(ref(this.#db, `tokenList/${id}`)),
+      get(ref(this.#resources.db, `tokenList/${id}`)),
       hash(token),
     ]);
     return res.exists() && res.val()?.hashedToken === expectedHashedToken;
@@ -71,7 +162,7 @@ export class FirebaseRealtimeDatabase {
     if (!this.testToken(id, token)) {
       return null;
     }
-    return new Writer(this.#db, id);
+    return new Writer(this.#resources, id);
   }
   /**
    * fromTimeから遡ってlimit個分のデータを取得する
@@ -85,12 +176,12 @@ export class FirebaseRealtimeDatabase {
     const dataRef = (() => {
       if (fromTime == undefined) {
         return query(
-          ref(this.#db, `graphList/${id}`),
+          ref(this.#resources.db, `graphList/${id}`),
           limitToLast(limit),
         );
       } else {
         return query(
-          ref(this.#db, `graphList/${id}`),
+          ref(this.#resources.db, `graphList/${id}`),
           orderByChild("time"),
           endAt(fromTime, "time"),
           limitToLast(limit),
@@ -105,9 +196,9 @@ export class FirebaseRealtimeDatabase {
   async deleteDataByTime(time: number) {
     //古いほうから取得して、timeを超えるまでnullを書き込む
     const resultPromises: Promise<void>[] = [];
-    (await get(ref(this.#db, "tokenList"))).forEach(({ key }) => {
+    (await get(ref(this.#resources.db, "tokenList"))).forEach(({ key }) => {
       const dataRef = query(
-        ref(this.#db, `graphList/${key}`),
+        ref(this.#resources.db, `graphList/${key}`),
         orderByChild("time"),
         endAt(time, "time"),
       );
@@ -127,36 +218,22 @@ export class FirebaseRealtimeDatabase {
 }
 
 class Writer {
-  #ref: DatabaseReference;
-  constructor(db: Database, id: string) {
-    this.#ref = ref(db, `graphList/${id}`);
+  readonly #getRef: () => DatabaseReference;
+  constructor(resources: FirebaseResources, id: string) {
+    this.#getRef = resources.link((resources) => {
+      return ref(resources.db, `graphList/${id}`);
+    });
   }
   async write(data: { time: number; [key: string]: unknown }) {
-    await push(this.#ref, data);
+    await push(this.#getRef(), data);
   }
 }
 
-/*
-const docRef = ref(db, "graphList/id");
-//console.log(docRef);
-
-await set(docRef, {
-  username: "name",
-  email: "email",
-  profile_picture: "imageUrl",
-});
-
-await get(child(ref(db), `graphList`)).then(
-  (snapshot) => {
-    console.log("success");
-
-    if (snapshot.exists()) {
-      console.log(snapshot.val());
-    } else {
-      console.log("No data available");
-    }
-  },
-).catch((error) => {
-  console.error(error);
-});
-*/
+export async function deleteAllDataForTestDoNotUse(
+  initializeOption: FirebaseOptions,
+) {
+  const app = initializeApp(initializeOption);
+  const db = getDatabase(app);
+  await set(ref(db), null);
+  deleteApp(app);
+}
