@@ -1,5 +1,5 @@
 import { FirebaseRealtimeDatabase } from "./realtime_db.ts";
 
-export const db = new FirebaseRealtimeDatabase(
+export const database = new FirebaseRealtimeDatabase(
   JSON.parse(Deno.env.get("FIREBASE_CONFIG")!),
 );
