@@ -6,11 +6,19 @@ const DATA_DELETE_CYCLE = 7 * 24 * 60 * 60 * 1000;
 router.GET.set(
   new URLPattern({ pathname: "/api/create_token/:id" }),
   async ({ match: { pathname: { groups: { id } } } }) => {
-    const token = await database.createToken(id).catch(() => null);
-    return {
-      body: JSON.stringify({ success: token != null, token }),
-      type: ".json",
-    };
+    try {
+      const token = await database.createToken(id);
+      return {
+        body: JSON.stringify({ success: token != null, token }),
+        type: ".json",
+      };
+    } catch (error) {
+      console.error("/api/create_token/:id", error);
+      return {
+        body: JSON.stringify({ success: false }),
+        type: ".json",
+      };
+    }
   },
 );
 
@@ -29,14 +37,21 @@ router.GET.set(
   async (
     { match: { pathname: { groups: { id } } }, url: { searchParams } },
   ) => {
-    const limit = stringToInt(searchParams.get("limit"));
-    const fromTime = stringToInt(searchParams.get("fromTime"));
-    const data = await database.getDataByLimit(id, { limit, fromTime })
-      .catch(() => null);
-    return {
-      body: JSON.stringify({ success: data != null, data }),
-      type: ".json",
-    };
+    try {
+      const limit = stringToInt(searchParams.get("limit"));
+      const fromTime = stringToInt(searchParams.get("fromTime"));
+      const data = await database.getDataByLimit(id, { limit, fromTime });
+      return {
+        body: JSON.stringify({ success: data != null, data }),
+        type: ".json",
+      };
+    } catch (error) {
+      console.error("/api/data/:id", error);
+      return {
+        body: JSON.stringify({ success: false }),
+        type: ".json",
+      };
+    }
   },
 );
 

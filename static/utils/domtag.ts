@@ -37,10 +37,3 @@ export class DomTag {
     return this.#text;
   }
 }
-
-console.log(
-  html`<div>${"<div>"}${html`<span>a</span>`}</div><div>${["<div>", "<div>"]}${[
-    "<hey>",
-    html`<span>a</span>`,
-  ]}</div>`.toString(),
-);
