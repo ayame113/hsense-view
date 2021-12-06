@@ -16,12 +16,13 @@ function contentTypeFromExt(extension?: Extension) {
 }
 
 async function createResponse(src: RouterResult) {
-  let { body, status, type } = await src;
+  let { body, status, contentType, type } = await src;
   body = body instanceof DomTag ? body.toString() : body;
   body ||= `${status} ${STATUS_TEXT.get(status ?? 200)}`;
+  contentType ||= contentTypeFromExt(type);
   return new Response(body, {
     status,
-    headers: { "Content-Type": contentTypeFromExt(type) },
+    headers: { "Content-Type": contentType },
   });
 }
 

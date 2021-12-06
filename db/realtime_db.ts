@@ -158,8 +158,8 @@ export class FirebaseRealtimeDatabase {
    * writer.write(data);
    * ```
    */
-  getWriter(id: string, token: string) {
-    if (!this.testToken(id, token)) {
+  async getWriter(id: string, token: string) {
+    if (!(await this.testToken(id, token))) {
       return null;
     }
     return new Writer(this.#resources, id);
@@ -225,6 +225,9 @@ class Writer {
     });
   }
   async write(data: { time: number; [key: string]: unknown }) {
+    if (typeof data.time !== "number") {
+      return; // TODO: エラーハンドリング
+    }
     await push(this.#getRef(), data);
   }
 }
@@ -237,3 +240,5 @@ export async function deleteAllDataForTestDoNotUse(
   await set(ref(db), null);
   deleteApp(app);
 }
+
+export type { Writer };

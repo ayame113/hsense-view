@@ -1,3 +1,3 @@
-export * from "./api/example.ts";
-export * from "./ws/example.ts";
-export * from "./ws/date.ts";
+export * from "./api/mod.ts";
+export * from "./sse/mod.ts";
+export * from "./ws/mod.ts";

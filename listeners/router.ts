@@ -20,10 +20,12 @@ export type RouterResult = PromiseOrValue<
   {
     body: BodyInit | ReturnType<typeof html>;
     status?: Status;
+    contentType?: string;
     type?: Extension;
   } | {
     body?: BodyInit | ReturnType<typeof html>;
     status: Status;
+    contentType?: string;
     type?: Extension;
   }
 >;
