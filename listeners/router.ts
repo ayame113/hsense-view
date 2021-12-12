@@ -1,4 +1,4 @@
-import type { Status } from "https://deno.land/std@0.114.0/http/mod.ts";
+import type { Status } from "https://deno.land/std@0.117.0/http/mod.ts";
 import { Router } from "../static/utils/router.ts";
 import type { html } from "../static/utils/domtag.ts";
 
