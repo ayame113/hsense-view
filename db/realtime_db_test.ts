@@ -8,6 +8,10 @@ import {
   FirebaseRealtimeDatabase,
 } from "./realtime_db.ts";
 
+Deno.test("should run test with --location flag", () => {
+  console.log(window.location);
+});
+
 Deno.test({
   name: "firebase realtime database",
   fn: async () => {
