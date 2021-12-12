@@ -209,11 +209,11 @@ export class FirebaseRealtimeDatabase {
           promises.push(remove(ref));
           return false;
         });
-        await Promise.all(promises);
+        await Promise.allSettled(promises);
       })());
       return false;
     });
-    await Promise.all(resultPromises);
+    await Promise.allSettled(resultPromises);
   }
 }
 
@@ -238,7 +238,7 @@ export async function deleteAllDataForTestDoNotUse(
   const app = initializeApp(initializeOption);
   const db = getDatabase(app);
   await set(ref(db), null);
-  deleteApp(app);
+  await deleteApp(app);
 }
 
 export type { Writer };
