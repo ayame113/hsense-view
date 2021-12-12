@@ -5,7 +5,6 @@ import {
 } from "https://deno.land/std@0.114.0/testing/asserts.ts";
 
 import { router } from "../router.ts";
-import { database } from "../../db/mod.ts";
 import "./db.ts";
 
 const encoder = new TextEncoder();
