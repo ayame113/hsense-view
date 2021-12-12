@@ -15,7 +15,7 @@ router.GET.set(
     } catch (error) {
       console.error("/api/create_token/:id", error);
       return {
-        body: JSON.stringify({ success: false }),
+        body: JSON.stringify({ success: false, token: null }),
         type: ".json",
       };
     }
@@ -48,14 +48,14 @@ router.GET.set(
     } catch (error) {
       console.error("/api/data/:id", error);
       return {
-        body: JSON.stringify({ success: false }),
+        body: JSON.stringify({ success: false, data: null }),
         type: ".json",
       };
     }
   },
 );
 
-router.GET.set(
+router.DELETE.set(
   new URLPattern({ pathname: "/api/delete_old_data" }),
   async () => {
     const time = Date.now() - DATA_DELETE_CYCLE;

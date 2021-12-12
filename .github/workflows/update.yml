@@ -1,6 +1,9 @@
-name: ci
+name: update-deno-dependencies
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: "0 9 * * *"
 
