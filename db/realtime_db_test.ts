@@ -24,6 +24,7 @@ Deno.test({
           Deno.env.get("FIREBASE_CONFIG_TEST")!,
         );
         await deleteAllDataForTestDoNotUse(initializeOption, id);
+        await delay(5000);
         const db = new FirebaseRealtimeDatabase(initializeOption, {
           logging: false,
           timeout: 1000,
@@ -75,9 +76,11 @@ Deno.test({
         assertEquals(await db.getDataByLimit(id), []);
         await db.cleanUp();
         await delay(5000);
+        await deleteAllDataForTestDoNotUse(initializeOption, id);
+        await delay(5000);
         console.log("fin");
       })(),
-      20 * 1000,
+      30 * 1000,
     );
   },
   // https://github.com/firebase/firebase-js-sdk/issues/5783
