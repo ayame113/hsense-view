@@ -1,5 +1,4 @@
 import { Deferred, deferred } from "https://deno.land/std@0.116.0/async/mod.ts";
-import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
 import {
@@ -26,6 +25,10 @@ import {
   set,
 } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
 
+import type {
+  Database as DatabaseInterface,
+  Writer as WriterInterface,
+} from "./types.ts";
 import { hash } from "./utils.ts";
 
 const DEFAULT_TIMEOUT = 120000;
@@ -101,7 +104,7 @@ class FirebaseResources {
   }
 }
 
-export class FirebaseRealtimeDatabase {
+export class FirebaseRealtimeDatabase implements DatabaseInterface {
   #resources: FirebaseResources;
   constructor(
     options: FirebaseOptions,
@@ -217,14 +220,14 @@ export class FirebaseRealtimeDatabase {
   }
 }
 
-class Writer {
+class Writer implements WriterInterface {
   readonly #getRef: () => DatabaseReference;
   constructor(resources: FirebaseResources, id: string) {
     this.#getRef = resources.link((resources) => {
       return ref(resources.db, `graphList/${id}`);
     });
   }
-  async write(data: { time: number; [key: string]: unknown }) {
+  async write(data: { time: number; [key: string]: number }) {
     if (typeof data.time !== "number") {
       return; // TODO: エラーハンドリング
     }
@@ -242,5 +245,3 @@ export async function deleteAllDataForTestDoNotUse(
   await set(ref(db, `tokenList/${id}`), null);
   await deleteApp(app);
 }
-
-export type { Writer };

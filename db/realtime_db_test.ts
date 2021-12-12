@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
+import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 import {
   assert,
   assertEquals,
@@ -37,10 +39,10 @@ Deno.test({
         const writer = await db.getWriter(id, token);
         assert(writer, "writer is null");
         for (let i = 0; i < 10; i++) {
-          await writer.write({ time: i, content: `i: ${i}` });
+          await writer.write({ time: i, content: `i: ${i}` as any });
         }
         await delay(2000); // 適切にwakeUpされることを確認する
-        await writer.write({ time: 10, content: `i: 10` });
+        await writer.write({ time: 10, content: `i: 10` as any });
 
         assertEquals(await db.getDataByLimit(id, { fromTime: 4 }), [
           { time: 0, content: "i: 0" },

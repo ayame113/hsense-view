@@ -47,6 +47,7 @@ type WebSocketRouterArg = {
 export const router = {
   GET: new Router<RouterArg, RouterResult>(),
   POST: new Router<RouterArg, RouterResult>(),
+  DELETE: new Router<RouterArg, RouterResult>(),
 };
 
 export const socketRouter = new Router<

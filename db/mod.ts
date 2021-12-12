@@ -1,15 +1,15 @@
 import { FirebaseRealtimeDatabase } from "./realtime_db.ts";
+import { Database, Writer } from "./types.ts";
 
-export type { Writer } from "./realtime_db.ts";
-
-let database: FirebaseRealtimeDatabase;
+let database: Database;
 try {
   database = new FirebaseRealtimeDatabase(
     JSON.parse(Deno.env.get("FIREBASE_CONFIG")!),
   );
 } catch (error) {
   console.warn(error);
-  database = {} as FirebaseRealtimeDatabase;
+  database = {} as Database;
 }
 
 export { database };
+export type { Database, Writer };

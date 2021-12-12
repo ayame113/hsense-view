@@ -1,3 +1,5 @@
+import "https://deno.land/x/dotenv@v3.1.0/load.ts";
+
 import { serve, STATUS_TEXT } from "https://deno.land/std@0.114.0/http/mod.ts";
 import { extname } from "https://deno.land/std@0.114.0/path/mod.ts";
 import { contentType } from "https://deno.land/x/media_types@v2.11.0/mod.ts";

@@ -55,7 +55,7 @@ router.GET.set(
   },
 );
 
-router.GET.set(
+router.DELETE.set(
   new URLPattern({ pathname: "/api/delete_old_data" }),
   async () => {
     const time = Date.now() - DATA_DELETE_CYCLE;

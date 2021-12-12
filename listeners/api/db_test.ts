@@ -13,7 +13,7 @@ const resolved: {
 const rejected = <T>(v?: T) => () => Promise.reject(v);
 
 Deno.test(
-  "/api/create_token/apple - success",
+  "/api/create_token/:id - success",
   async () => {
     const mock = mockFn(database, "createToken", resolved("[API test]"));
     const { handler, match } = router.GET.get({
@@ -28,7 +28,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/create_token/apple - fail",
+  "/api/create_token/:id - fail",
   async () => {
     const mock = mockFn(database, "createToken", resolved(null));
     const { handler, match } = router.GET.get({
@@ -43,7 +43,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/create_token/apple - throw",
+  "/api/create_token/:id - throw",
   async () => {
     const mock = mockFn(database, "createToken", rejected("throw for test"));
     const { handler, match } = router.GET.get({
@@ -58,7 +58,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/data/apple - limit/fromTime - success",
+  "/api/data/:id - limit/fromTime - success",
   async () => {
     const mock = mockFn(database, "getDataByLimit", resolved([{ time: 0 }]));
     const { handler, match } = router.GET.get({
@@ -75,7 +75,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/data/apple - limit - success",
+  "/api/data/:id - limit - success",
   async () => {
     const mock = mockFn(database, "getDataByLimit", resolved([{ time: 0 }]));
     const { handler, match } = router.GET.get({
@@ -92,7 +92,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/data/apple - fromTime - success",
+  "/api/data/:id - fromTime - success",
   async () => {
     const mock = mockFn(database, "getDataByLimit", resolved([{ time: 0 }]));
     const { handler, match } = router.GET.get({
@@ -109,7 +109,7 @@ Deno.test(
 );
 
 Deno.test(
-  "/api/data/apple - fail",
+  "/api/data/:id - fail",
   async () => {
     const mock = mockFn(database, "getDataByLimit", rejected("throw for test"));
     const { handler, match } = router.GET.get({
@@ -130,7 +130,7 @@ Deno.test(
   async () => {
     const mock = mockFn(database, "deleteDataByTime", resolved());
     const dateMock = mockFn(Date, "now", () => 500 + 7 * 24 * 60 * 60 * 1000);
-    const { handler, match } = router.GET.get({
+    const { handler, match } = router.DELETE.get({
       pathname: "/api/delete_old_data",
     });
     const result = await handler!({ match } as any);
@@ -151,7 +151,7 @@ Deno.test(
       rejected("throw for test"),
     );
     const dateMock = mockFn(Date, "now", () => 500 + 7 * 24 * 60 * 60 * 1000);
-    const { handler, match } = router.GET.get({
+    const { handler, match } = router.DELETE.get({
       pathname: "/api/delete_old_data",
     });
     const result = await handler!({ match } as any);
