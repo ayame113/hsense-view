@@ -74,7 +74,6 @@ Deno.test({
         await db.deleteDataByTime(10);
         assertEquals(await db.getDataByLimit(id), []);
         await db.cleanUp();
-        await deleteAllDataForTestDoNotUse(initializeOption, id);
         await delay(5000);
         console.log("fin");
       })(),
