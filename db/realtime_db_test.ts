@@ -26,7 +26,7 @@ Deno.test({
 
     await delay(2000); // 適切にwakeUpされることを確認する
 
-    const writer = db.getWriter(id, token);
+    const writer = await db.getWriter(id, token);
     assert(writer, "writer is null");
     for (let i = 0; i < 10; i++) {
       await writer.write({ time: i, content: `i: ${i}` });
