@@ -26,7 +26,7 @@ Deno.test({
         await deleteAllDataForTestDoNotUse(initializeOption, id);
         await delay(5000);
         const db = new FirebaseRealtimeDatabase(initializeOption, {
-          logging: false,
+          logging: true,
           timeout: 1000,
         });
 
