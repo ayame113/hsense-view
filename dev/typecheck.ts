@@ -5,6 +5,85 @@ import "../serve.ts";
 
 //copy from denokand/deno
 declare global {
+  namespace Deno {
+    /** A set of error constructors that are raised by Deno APIs. */
+    export namespace errors {
+      export class NotFound extends Error {}
+      export class PermissionDenied extends Error {}
+      export class ConnectionRefused extends Error {}
+      export class ConnectionReset extends Error {}
+      export class ConnectionAborted extends Error {}
+      export class NotConnected extends Error {}
+      export class AddrInUse extends Error {}
+      export class AddrNotAvailable extends Error {}
+      export class BrokenPipe extends Error {}
+      export class AlreadyExists extends Error {}
+      export class InvalidData extends Error {}
+      export class TimedOut extends Error {}
+      export class Interrupted extends Error {}
+      export class WriteZero extends Error {}
+      export class UnexpectedEof extends Error {}
+      export class BadResource extends Error {}
+      export class Http extends Error {}
+      export class Busy extends Error {}
+    }
+  }
+
+  interface BroadcastChannelEventMap {
+    "message": MessageEvent;
+    "messageerror": MessageEvent;
+  }
+
+  interface BroadcastChannel extends EventTarget {
+    /**
+     * Returns the channel name (as passed to the constructor).
+     */
+    readonly name: string;
+    onmessage: ((this: BroadcastChannel, ev: MessageEvent) => any) | null;
+    onmessageerror: ((this: BroadcastChannel, ev: MessageEvent) => any) | null;
+    /**
+     * Closes the BroadcastChannel object, opening it up to garbage collection.
+     */
+    close(): void;
+    /**
+     * Sends the given message to other BroadcastChannel objects set up for
+     * this channel. Messages can be structured objects, e.g. nested objects
+     * and arrays.
+     */
+    postMessage(message: any): void;
+    addEventListener<K extends keyof BroadcastChannelEventMap>(
+      type: K,
+      listener: (
+        this: BroadcastChannel,
+        ev: BroadcastChannelEventMap[K],
+      ) => any,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void;
+    removeEventListener<K extends keyof BroadcastChannelEventMap>(
+      type: K,
+      listener: (
+        this: BroadcastChannel,
+        ev: BroadcastChannelEventMap[K],
+      ) => any,
+      options?: boolean | EventListenerOptions,
+    ): void;
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions,
+    ): void;
+  }
+
+  var BroadcastChannel: {
+    prototype: BroadcastChannel;
+    new (name: string): BroadcastChannel;
+  };
+
   interface URLPatternInit {
     protocol?: string;
     username?: string;
