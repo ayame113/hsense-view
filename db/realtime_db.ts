@@ -234,10 +234,12 @@ class Writer {
 
 export async function deleteAllDataForTestDoNotUse(
   initializeOption: FirebaseOptions,
+  id: string,
 ) {
   const app = initializeApp(initializeOption);
   const db = getDatabase(app);
-  await set(ref(db), null);
+  await set(ref(db, `graphList/${id}`), null);
+  await set(ref(db, `tokenList/${id}`), null);
   await deleteApp(app);
 }
 

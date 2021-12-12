@@ -17,15 +17,15 @@ Deno.test({
   fn: async () => {
     return await deadline(
       (async () => {
+        const id = `test-${Math.random()}`.replaceAll(".", "");
         const initializeOption = JSON.parse(
           Deno.env.get("FIREBASE_CONFIG_TEST")!,
         );
-        await deleteAllDataForTestDoNotUse(initializeOption);
+        await deleteAllDataForTestDoNotUse(initializeOption, id);
         const db = new FirebaseRealtimeDatabase(initializeOption, {
-          logging: true,
+          logging: false,
           timeout: 1000,
         });
-        const id = "nagano";
 
         const token = await db.createToken(id);
         assert(token, "failed to get token");
@@ -72,7 +72,7 @@ Deno.test({
         await db.deleteDataByTime(10);
         assertEquals(await db.getDataByLimit(id), []);
         await db.cleanUp();
-        await deleteAllDataForTestDoNotUse(initializeOption);
+        await deleteAllDataForTestDoNotUse(initializeOption, id);
         await delay(5000);
         console.log("fin");
       })(),
