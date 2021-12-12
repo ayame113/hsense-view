@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { assert } from "https://deno.land/std@0.114.0/testing/asserts.ts";
-import { deferred } from "https://deno.land/std@0.116.0/async/mod.ts";
+import { assert } from "https://deno.land/std@0.117.0/testing/asserts.ts";
+import { deferred } from "https://deno.land/std@0.117.0/async/mod.ts";
 
 import { MockWebSocket } from "../../static/utils/test_mock.ts";
 import { socketRouter } from "../router.ts";

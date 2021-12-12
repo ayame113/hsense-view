@@ -3,8 +3,8 @@ import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.116.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.116.0/async/mod.ts";
+} from "https://deno.land/std@0.117.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.117.0/async/mod.ts";
 import {
   deleteAllDataForTestDoNotUse,
   FirebaseRealtimeDatabase,
