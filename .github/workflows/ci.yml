@@ -39,7 +39,7 @@ jobs:
       - name: 😎 Test
         env:
           FIREBASE_CONFIG_TEST: ${{secrets.FIREBASE_CONFIG_TEST}}
-        run: deno test --allow-net=0.0.0.0:8000 --allow-env=FIREBASE_CONFIG_TEST --allow-read=. --unstable --location=http://foo.com/ --coverage=coverage
+        run: deno test --allow-net --allow-env=FIREBASE_CONFIG_TEST --allow-read=. --unstable --location=http://foo.com/ --coverage=coverage
       - name: Create coverage report
         run: deno coverage ./coverage --lcov > coverage.lcov
       - name: Codecov
