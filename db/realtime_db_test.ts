@@ -22,7 +22,7 @@ Deno.test({
         );
         await deleteAllDataForTestDoNotUse(initializeOption);
         const db = new FirebaseRealtimeDatabase(initializeOption, {
-          logging: false,
+          logging: true,
           timeout: 1000,
         });
         const id = "nagano";
