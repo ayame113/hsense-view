@@ -194,7 +194,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
     const data = await get(dataRef);
     const res: { time: number; [key: string]: unknown }[] = [];
     data.forEach((val) => (res.push(val.val()), false));
-    return res;
+    return res.reverse();
   }
   async deleteDataByTime(time: number) {
     //古いほうから取得して、timeを超えるまでnullを書き込む

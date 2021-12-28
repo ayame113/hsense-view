@@ -1,0 +1,11 @@
+:host{
+	display: block;
+}
+socket-graph-data-inner {
+	display: block;
+	overflow: hidden;
+	resize: both;
+	border: 1px solid gray;
+	height: 300px;
+	width: 100%;
+}

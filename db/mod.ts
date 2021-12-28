@@ -1,3 +1,4 @@
+import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 import { FirebaseRealtimeDatabase } from "./realtime_db.ts";
 import { Database, Writer } from "./types.ts";
 
