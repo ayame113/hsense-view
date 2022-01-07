@@ -115,38 +115,41 @@ export class TimeList<T> {
   }
   margeFirst(target: TimeList<T>) {
     this.throwIfDestroyed();
-    // firstを変更
-    this.#first = target.#first;
     // 結合する
     const leftLast = target.#last.prev;
     const rightFirst = this.#first.next;
     leftLast.next = rightFirst;
     rightFirst.prev = leftLast;
+    // firstを変更
+    this.#first = target.#first;
     // targetを破棄
     target.#destroyed = true;
   }
   margeLast(target: TimeList<T>) {
     this.throwIfDestroyed();
-    // lastを変更
-    this.#last = target.#last;
     // 結合する
     const leftLast = this.#last.prev;
     const rightFirst = target.#first.next;
     leftLast.next = rightFirst;
     rightFirst.prev = leftLast;
+    // lastを変更
+    this.#last = target.#last;
     // targetを破棄
     target.#destroyed = true;
   }
   /** デバッグ用 */
   dump() {
+    console.log("==dump==");
     let target: AnyListElement<T> = this.#first;
     for (let i = 0; i < 100; i++) {
-      console.log(target);
+      console.log({ done: target.done, value: JSON.stringify(target.value) });
       if (!target.next) {
+        console.log(`count: ${i}`);
         break;
       }
       target = target.next;
     }
+    console.log("==dump end==");
   }
   throwIfDestroyed() {
     if (this.#destroyed) {

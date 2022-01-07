@@ -15,11 +15,15 @@ class DataElement extends HTMLElement {
     shadow.appendChild(
       new GraphElement(
         new DataList({
-          requestOldData() {
-            console.log("requestOldData");
-            return Promise.resolve(
-              [...new Array(50).keys()].map((i) => ({ time: i, i })),
-            );
+          async requestOldData(time) {
+            console.log("request old data: ", time);
+            await new Promise((ok) => setTimeout(ok, 1000));
+            time ??= Date.now();
+            const res = [];
+            for (let i = 1; i < 100; i++) {
+              res.push({ time: time - i, i });
+            }
+            return res;
           },
         }),
         ["i"],
@@ -119,8 +123,8 @@ class GraphElement extends HTMLElement {
     this.#onDisconnect = [];
     this.#resizeObserver.unobserve(this);
   }
-  #currentElement?: ListElement<TimeData>;
   async #startListeningMoveEvent() {
+    // TODO: bindのremoveEventListenerはできない
     this.addEventListener("mousedown", this.#onmousedown.bind(this));
     globalThis.addEventListener("mouseup", this.#onmouseup.bind(this));
     this.addEventListener("mousemove", this.#onmousemove.bind(this));
@@ -133,44 +137,70 @@ class GraphElement extends HTMLElement {
     this.#onDisconnect.push(() => {
       isLoop = false;
     });
+    await this.#list.requestData();
+    const leftPoint = this.#list.first.value?.time;
+    const rightPoint = this.#list.last.value?.time;
+    const maxPoint = this.#list.getMaxVal(...this.#keys);
+    const minPoint = this.#list.getMinVal(...this.#keys);
+    if (
+      leftPoint != null && rightPoint != null &&
+      maxPoint != null && minPoint != null
+    ) {
+      this.#position = {
+        scaleX: (rightPoint - leftPoint) / this.#position.width,
+        scaleY: (maxPoint - minPoint) / this.#position.height,
+        originX: leftPoint,
+        originY: maxPoint,
+        width: this.#position.width,
+        height: this.#position.height,
+      };
+      console.log(this.#position);
+    }
+
+    let pointerForFirst: ListElement<TimeData> | undefined;
     while (isLoop) {
       await animationFramePromise();
       if (this.#shouldRender) {
         console.log("render!");
-        const from = this.#position.originX;
-        const to = from - (this.#position.width * this.#position.scaleX);
-        this.#list.requestLoadData(from);
-        this.#list.requestLoadData(to);
-        for (const key of this.#keys) {
-          this.#ctx?.beginPath();
-          let isFirst = true;
-          for (
-            const data of this.#list.iterate(from, to, this.#currentElement)
-          ) {
-            console.log(data);
-            this.#ctx?.[isFirst ? "moveTo" : "lineTo"](
-              (data.value.time - from) / this.#position.scaleX,
-              (-data.value[key] + to) / this.#position.scaleY,
+        const oldestTime = this.#position.originX;
+        const latestTime = oldestTime +
+          (this.#position.width * this.#position.scaleX);
+        console.log("render pos: ", { oldestTime, latestTime });
+        pointerForFirst = this.#list.getElementFromTime(
+          latestTime,
+          pointerForFirst,
+        );
+        if (this.#ctx && pointerForFirst) {
+          for (const key of this.#keys) {
+            renderLine(
+              this.#ctx,
+              map(
+                map(
+                  DataList.iterate(pointerForFirst),
+                  (v) => [v.time, v[key]] as const,
+                ),
+                this.#valueToCanvasPos.bind(this),
+              ),
             );
-            this.#currentElement = data;
-            isFirst = true;
           }
-          this.#ctx?.stroke();
         }
+        this.#list.requestData({ oldestTime, latestTime })
+          .then(() => console.log("this.#shouldRender = true"));
+        //.then(() => this.#shouldRender = true);
       }
       this.#shouldRender = false;
     }
   }
-  #valueToCanvasPos(x: number, y: number) {
+  #valueToCanvasPos([x, y]: readonly [number, number]) {
     return [
       (x - this.#position.originX) / this.#position.scaleX,
-      (y - this.#position.originY) / this.#position.scaleY,
+      -(y - this.#position.originY) / this.#position.scaleY,
     ] as const;
   }
-  #canvasPosToValue(x: number, y: number) {
+  #canvasPosToValue([cx, cy]: readonly [number, number]) {
     return [
-      x * this.#position.scaleX + this.#position.originX,
-      y * this.#position.scaleY + this.#position.originY,
+      cx * this.#position.scaleX + this.#position.originX,
+      cy * this.#position.scaleY - this.#position.originY,
     ] as const;
   }
 }
@@ -275,4 +305,27 @@ function createElement(
     element.setAttribute(k, v.toString());
   }
   return element;
+}
+
+function* map<T, R>(target: Iterable<T>, fn: (arg: T) => R) {
+  for (const v of target) {
+    yield fn(v);
+  }
+}
+
+function renderLine(
+  ctx: CanvasRenderingContext2D,
+  data: Iterable<readonly [number, number]>,
+  option: { strokeStyle?: string; lineWidth?: number } = {},
+) {
+  ctx.beginPath();
+  ctx.strokeStyle = option.strokeStyle ?? "black";
+  ctx.lineWidth = option.lineWidth ?? 1;
+  let isFirst = true;
+  for (const [x, y] of data) {
+    console.log(Object.assign([], { x, y }));
+    ctx[isFirst ? "moveTo" : "lineTo"](x, y);
+    isFirst = false;
+  }
+  ctx.stroke();
 }
