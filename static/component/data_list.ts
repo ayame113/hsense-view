@@ -142,35 +142,6 @@ export class DataList extends TimeList<TimeData> {
       await this.#internalRequestData(oldestTime, null);
     }
   }
-  #internalPointer?: ListElement<TimeData>;
-  *iterateData(oldestTime: number, latestTime: number) {
-    if (this.first.done) {
-      return;
-    }
-    this.#internalPointer ??= this.first;
-    if (this.#internalPointer.value.time < oldestTime) {
-      while (
-        !this.#internalPointer.next.done &&
-        oldestTime < this.#internalPointer.value.time
-      ) {
-        this.#internalPointer = this.#internalPointer.next;
-      }
-    } else {
-      while (
-        !this.#internalPointer.prev.done &&
-        this.#internalPointer.value.time < oldestTime
-      ) {
-        this.#internalPointer = this.#internalPointer.prev;
-      }
-    }
-    let currentElement: ListElement<TimeData> | LastListElement<TimeData> =
-      this.#internalPointer;
-    while (!currentElement.done && currentElement.value.time < latestTime) {
-      yield currentElement.value;
-      currentElement = currentElement.next;
-    }
-  }
-
   getElementFromTime(time: number, initialPointer?: ListElement<TimeData>) {
     this.throwIfDestroyed();
     if (this.first.done) {
