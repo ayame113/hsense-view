@@ -1,8 +1,4 @@
-import {
-  type LastListElement,
-  type ListElement,
-  TimeList,
-} from "../utils/list.ts";
+import { type ListElement, TimeList } from "../utils/list.ts";
 
 export type TimeData = { time: number; [key: string]: number };
 
@@ -78,35 +74,49 @@ export class DataList extends TimeList<TimeData> {
     }
   }
   #latestTime: number | null = null;
-  #loadingPromise: Promise<void>;
+  #loadingPromise: Promise<void | boolean>;
   // 何も指定せず1回読み込み(リストは空)
   // 起点時刻と終了時刻を指定して複数回読み込み(リストは空)
   // 起点時刻と終了時刻を指定して複数回読み込み
   requestData(range?: { oldestTime: number; latestTime: number }) {
-    return this.#loadingPromise = this.#loadingPromise.catch(console.error)
+    return this.#loadingPromise = this.#loadingPromise
       .then(async () => {
         if (!range) {
           if (!this.first.done) {
             throw "!!!!!!!";
           }
-          return await this.#internalRequestData(null, null);
+          console.log("#internalRequestData (empty list)");
+          // リストが空の場合：初期データ読み込み（範囲指定せず1回読み込み）
+          await this.#internalRequestData(null, null);
+          return true;
         }
         const { oldestTime, latestTime } = range;
         if (this.first.done) {
-          return await this.#internalRequestData(oldestTime, latestTime);
+          console.log("#internalRequestData (empty list, with range)");
+          // リストが空の場合：初期データ読み込み（範囲指定）
+          await this.#internalRequestData(oldestTime, latestTime);
+          return true;
         }
 
+        let loaded = false;
         if (oldestTime < this.first.value.time) {
+          console.log("#internalRequestData (list forward)");
           await this.#internalRequestData(oldestTime, null);
+          loaded = true;
         }
         if (this.#latestTime !== null && this.#latestTime < latestTime) {
           const newData = new DataList({
             requestOldData: this.#requestOldData,
           });
+          console.log("#internalRequestData (list backward)");
           await newData.#internalRequestData(this.#latestTime, latestTime);
           this.margeLast(newData);
+          this.dump();
+          loaded = true;
         }
-      });
+        return loaded;
+      })
+      .catch(console.error);
   }
   /** nullの時は1回読み込み, 数値の時はその時刻まで読み込み */
   async #internalRequestData(
@@ -126,8 +136,11 @@ export class DataList extends TimeList<TimeData> {
       loadStartTime = this.first.value.time;
     }
     const result = await this.#requestOldData(loadStartTime);
+    let breaked = false;
     for (const data of result) {
       if (oldestTime !== null && data.time < oldestTime) {
+        console.log("breaked!!!!!!!!!!!!!!!!!!", data.time);
+        breaked = true;
         break;
       }
       this.addFirst(data);
@@ -136,6 +149,7 @@ export class DataList extends TimeList<TimeData> {
       this.#latestTime ??= this.last.value.time;
     }
     if (
+      !breaked &&
       oldestTime !== null && !this.first.done &&
       oldestTime < this.first.value.time
     ) {

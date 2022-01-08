@@ -17,12 +17,15 @@ class DataElement extends HTMLElement {
         new DataList({
           async requestOldData(time) {
             console.log("request old data: ", time);
-            await new Promise((ok) => setTimeout(ok, 1000));
+            await new Promise((ok) => setTimeout(ok, 500));
             time ??= Date.now();
+            time = Math.floor(time);
             const res = [];
-            for (let i = 1; i < 100; i++) {
-              res.push({ time: time - i, i });
+            for (let i = 1; i < 10; i++) {
+              res.push({ time: time - i, i: Math.sin((time - i) / 2) });
             }
+            console.log(res);
+
             return res;
           },
         }),
@@ -81,29 +84,33 @@ class GraphElement extends HTMLElement {
     });
   }
   #isMouseDown = false;
-  #onmousedown() {
+  #onmousedown = () => {
     this.#isMouseDown = true;
-  }
-  #onmouseup() {
+  };
+  #onmouseup = () => {
     this.#isMouseDown = false;
-  }
+    this.#offsetX = undefined;
+    this.#offsetY = undefined;
+  };
   #offsetX: number | undefined;
   #offsetY: number | undefined;
-  #onmousemove(event: MouseEvent) {
+  #onmousemove = (event: MouseEvent) => {
     if (!this.#isMouseDown) {
       return;
     }
     if (this.#offsetX != null) {
-      this.#position.originX += event.offsetX - this.#offsetX;
+      this.#position.originX -= (event.offsetX - this.#offsetX) *
+        this.#position.scaleX;
       this.#shouldRender = true;
     }
     if (this.#offsetY != null) {
-      this.#position.originY += event.offsetY - this.#offsetY;
+      this.#position.originY += (event.offsetY - this.#offsetY) *
+        this.#position.scaleY;
       this.#shouldRender = true;
     }
     this.#offsetX = event.offsetX;
     this.#offsetY = event.offsetY;
-  }
+  };
   connectedCallback() {
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
@@ -124,10 +131,9 @@ class GraphElement extends HTMLElement {
     this.#resizeObserver.unobserve(this);
   }
   async #startListeningMoveEvent() {
-    // TODO: bindのremoveEventListenerはできない
-    this.addEventListener("mousedown", this.#onmousedown.bind(this));
-    globalThis.addEventListener("mouseup", this.#onmouseup.bind(this));
-    this.addEventListener("mousemove", this.#onmousemove.bind(this));
+    this.addEventListener("mousedown", this.#onmousedown);
+    globalThis.addEventListener("mouseup", this.#onmouseup);
+    this.addEventListener("mousemove", this.#onmousemove);
     this.#onDisconnect.push(() => {
       this.removeEventListener("mousedown", this.#onmousedown);
       globalThis.removeEventListener("mouseup", this.#onmouseup);
@@ -161,16 +167,23 @@ class GraphElement extends HTMLElement {
     while (isLoop) {
       await animationFramePromise();
       if (this.#shouldRender) {
-        console.log("render!");
+        console.log("render!", this.#position);
         const oldestTime = this.#position.originX;
         const latestTime = oldestTime +
           (this.#position.width * this.#position.scaleX);
-        console.log("render pos: ", { oldestTime, latestTime });
         pointerForFirst = this.#list.getElementFromTime(
-          latestTime,
+          oldestTime,
           pointerForFirst,
         );
+        console.log("render pos: ", { oldestTime, latestTime });
         if (this.#ctx && pointerForFirst) {
+          this.#ctx.fillStyle = "white";
+          this.#ctx.fillRect(
+            0,
+            0,
+            this.#ctx.canvas.width,
+            this.#ctx.canvas.height,
+          );
           for (const key of this.#keys) {
             renderLine(
               this.#ctx,
@@ -184,9 +197,16 @@ class GraphElement extends HTMLElement {
             );
           }
         }
-        this.#list.requestData({ oldestTime, latestTime })
-          .then(() => console.log("this.#shouldRender = true"));
-        //.then(() => this.#shouldRender = true);
+        this.#list.requestData({
+          oldestTime: Math.floor(oldestTime),
+          latestTime: Math.ceil(latestTime),
+        })
+          .then((loaded) => {
+            if (loaded) {
+              console.log("this.#shouldRender = true");
+              this.#shouldRender = true;
+            }
+          });
       }
       this.#shouldRender = false;
     }
@@ -194,7 +214,7 @@ class GraphElement extends HTMLElement {
   #valueToCanvasPos([x, y]: readonly [number, number]) {
     return [
       (x - this.#position.originX) / this.#position.scaleX,
-      -(y - this.#position.originY) / this.#position.scaleY,
+      (this.#position.originY - y) / this.#position.scaleY,
     ] as const;
   }
   #canvasPosToValue([cx, cy]: readonly [number, number]) {
@@ -312,6 +332,14 @@ function* map<T, R>(target: Iterable<T>, fn: (arg: T) => R) {
     yield fn(v);
   }
 }
+function* breakIf<T>(target: Iterable<T>, fn: (arg: T) => boolean) {
+  for (const v of target) {
+    if (fn(v)) {
+      return;
+    }
+    yield v;
+  }
+}
 
 function renderLine(
   ctx: CanvasRenderingContext2D,
@@ -323,7 +351,6 @@ function renderLine(
   ctx.lineWidth = option.lineWidth ?? 1;
   let isFirst = true;
   for (const [x, y] of data) {
-    console.log(Object.assign([], { x, y }));
     ctx[isFirst ? "moveTo" : "lineTo"](x, y);
     isFirst = false;
   }
