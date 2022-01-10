@@ -16,16 +16,13 @@ class DataElement extends HTMLElement {
       new GraphElement(
         new DataList({
           async requestOldData(time) {
-            console.log("request old data: ", time);
             await new Promise((ok) => setTimeout(ok, 500));
             time ??= Date.now();
             time = Math.floor(time);
             const res = [];
-            for (let i = 1; i < 10; i++) {
-              res.push({ time: time - i, i: Math.sin((time - i) / 2) });
+            for (let i = 1; i < 50; i++) {
+              res.push({ time: time - i, i: Math.sin((time - i) / 5) });
             }
-            console.log(res);
-
             return res;
           },
         }),
@@ -167,7 +164,6 @@ class GraphElement extends HTMLElement {
     while (isLoop) {
       await animationFramePromise();
       if (this.#shouldRender) {
-        console.log("render!", this.#position);
         const oldestTime = this.#position.originX;
         const latestTime = oldestTime +
           (this.#position.width * this.#position.scaleX);
@@ -175,7 +171,6 @@ class GraphElement extends HTMLElement {
           oldestTime,
           pointerForFirst,
         );
-        console.log("render pos: ", { oldestTime, latestTime });
         if (this.#ctx && pointerForFirst) {
           this.#ctx.fillStyle = "white";
           this.#ctx.fillRect(
@@ -203,7 +198,6 @@ class GraphElement extends HTMLElement {
         })
           .then((loaded) => {
             if (loaded) {
-              console.log("this.#shouldRender = true");
               this.#shouldRender = true;
             }
           });

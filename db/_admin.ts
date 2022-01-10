@@ -11,20 +11,20 @@ esm.shが直し中なのでまた後で試す
 import {
   credential,
   initializeApp,
-} from "https://esm.sh/firebase-admin@10.0.0/app";
+} from "https://esm.sh/firebase-admin@10.0.1/app";
 */
 //} from "https://cdn.skypack.dev/firebase-admin@10.0.0/app/index";
 //} from "https://jspm.dev/firebase-admin@10.0.0/app";
 /*
-
-/*
-import admin from "https://esm.sh/firebase-admin@10.0.0";
+*/
+import * as admin from "https://esm.sh/firebase-admin@10.0.1/app";
 console.log(admin);
 
 const {
   credential,
   initializeApp,
 } = admin;
+/*
 * /
 // ENVから読む
 const cert = {

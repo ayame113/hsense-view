@@ -75,6 +75,7 @@ export class DataList extends TimeList<TimeData> {
   }
   #latestTime: number | null = null;
   #loadingPromise: Promise<void | boolean>;
+  // 起点時刻～終了時刻の前後部分も一気に読み込んでしまう
   // 何も指定せず1回読み込み(リストは空)
   // 起点時刻と終了時刻を指定して複数回読み込み(リストは空)
   // 起点時刻と終了時刻を指定して複数回読み込み
@@ -83,35 +84,40 @@ export class DataList extends TimeList<TimeData> {
       .then(async () => {
         if (!range) {
           if (!this.first.done) {
-            throw "!!!!!!!";
+            throw new Error(
+              "Calls to non-empty lists that do not specify a range are not supported.",
+            );
           }
-          console.log("#internalRequestData (empty list)");
           // リストが空の場合：初期データ読み込み（範囲指定せず1回読み込み）
           await this.#internalRequestData(null, null);
           return true;
         }
         const { oldestTime, latestTime } = range;
+        const oldestTimeForAdditionalRange = oldestTime * 2 - latestTime;
+        const latestTimeForAdditionalRange = latestTime * 2 - oldestTime;
         if (this.first.done) {
-          console.log("#internalRequestData (empty list, with range)");
           // リストが空の場合：初期データ読み込み（範囲指定）
-          await this.#internalRequestData(oldestTime, latestTime);
+          await this.#internalRequestData(
+            oldestTimeForAdditionalRange,
+            latestTimeForAdditionalRange,
+          );
           return true;
         }
 
         let loaded = false;
         if (oldestTime < this.first.value.time) {
-          console.log("#internalRequestData (list forward)");
-          await this.#internalRequestData(oldestTime, null);
+          await this.#internalRequestData(oldestTimeForAdditionalRange, null);
           loaded = true;
         }
         if (this.#latestTime !== null && this.#latestTime < latestTime) {
           const newData = new DataList({
             requestOldData: this.#requestOldData,
           });
-          console.log("#internalRequestData (list backward)");
-          await newData.#internalRequestData(this.#latestTime, latestTime);
+          await newData.#internalRequestData(
+            this.#latestTime,
+            latestTimeForAdditionalRange,
+          );
           this.margeLast(newData);
-          this.dump();
           loaded = true;
         }
         return loaded;
@@ -123,7 +129,6 @@ export class DataList extends TimeList<TimeData> {
     oldestTime: number | null,
     latestTime: number | null,
   ) {
-    console.log("internalRequestData: ", { oldestTime, latestTime });
     let loadStartTime: number | undefined;
     if (this.first.done) {
       loadStartTime = latestTime ?? undefined;
@@ -139,7 +144,6 @@ export class DataList extends TimeList<TimeData> {
     let breaked = false;
     for (const data of result) {
       if (oldestTime !== null && data.time < oldestTime) {
-        console.log("breaked!!!!!!!!!!!!!!!!!!", data.time);
         breaked = true;
         break;
       }
@@ -174,7 +178,7 @@ export class DataList extends TimeList<TimeData> {
     return pointer;
   }
 }
-
+/*
 const l = new DataList({
   requestOldData(time) {
     time ??= Date.now();
@@ -197,7 +201,7 @@ await l.requestData({
 console.log("result:");
 l.dump();
 */
-
+/*
 for (let time = 0; time < 10; time++) {
   l.addLast({ time });
 }
@@ -206,3 +210,4 @@ const p4 = l.getElementFromTime(4);
 console.log(p4?.value);
 const p2 = l.getElementFromTime(2, p4);
 console.log(p2?.value);
+*/
