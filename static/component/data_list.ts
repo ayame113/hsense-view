@@ -2,6 +2,7 @@ import { type ListElement, TimeList } from "../utils/list.ts";
 
 export type TimeData = { time: number; [key: string]: number };
 
+// TODO: リアルタイム読み込み
 export class DataList extends TimeList<TimeData> {
   #max: { [key: string]: number };
   #min: { [key: string]: number };

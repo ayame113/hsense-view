@@ -46,14 +46,26 @@ Deno.test("TimeList addLast and addFirst", () => {
   assertEquals([...TimeList.iterate(list.last, "backward")], [1, 0, 0, 1]);
 });
 
-Deno.test("TimeList marge", () => {
+Deno.test("TimeList margeLast", () => {
   const list1 = new TimeList<number>();
   list1.addLast(0);
   list1.addLast(1);
   const list2 = new TimeList<number>();
   list2.addLast(2);
   list2.addLast(3);
-  const list = TimeList.marge(list1, list2);
-  assertEquals([...TimeList.iterate(list.first)], [0, 1, 2, 3]);
-  assertEquals([...TimeList.iterate(list.last, "backward")], [3, 2, 1, 0]);
+  list1.margeLast(list2);
+  assertEquals([...TimeList.iterate(list1.first)], [0, 1, 2, 3]);
+  assertEquals([...TimeList.iterate(list1.last, "backward")], [3, 2, 1, 0]);
+});
+
+Deno.test("TimeList margeFirst", () => {
+  const list1 = new TimeList<number>();
+  list1.addLast(0);
+  list1.addLast(1);
+  const list2 = new TimeList<number>();
+  list2.addLast(2);
+  list2.addLast(3);
+  list2.margeFirst(list1);
+  assertEquals([...TimeList.iterate(list2.first)], [0, 1, 2, 3]);
+  assertEquals([...TimeList.iterate(list2.last, "backward")], [3, 2, 1, 0]);
 });

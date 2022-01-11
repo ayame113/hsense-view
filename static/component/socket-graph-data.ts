@@ -212,7 +212,10 @@ class GraphElement extends HTMLElement {
               this.#ctx,
               map(
                 map(
-                  DataList.iterate(pointerForFirst),
+                  breakIf(
+                    DataList.iterate(pointerForFirst),
+                    (data) => latestTime < data.time,
+                  ),
                   (v) => [v.time, v[key]] as const,
                 ),
                 this.#valueToCanvasPos.bind(this),
@@ -239,12 +242,12 @@ class GraphElement extends HTMLElement {
       (this.#position.originY - y) / this.#position.scaleY,
     ] as const;
   }
-  #canvasPosToValue([cx, cy]: readonly [number, number]) {
+  /*#canvasPosToValue([cx, cy]: readonly [number, number]) {
     return [
       cx * this.#position.scaleX + this.#position.originX,
       cy * this.#position.scaleY - this.#position.originY,
     ] as const;
-  }
+  }*/
 }
 
 customElements.define("socket-graph-data-inner", GraphElement);
@@ -367,6 +370,7 @@ function* map<T, R>(target: Iterable<T>, fn: (arg: T) => R) {
 function* breakIf<T>(target: Iterable<T>, fn: (arg: T) => boolean) {
   for (const v of target) {
     if (fn(v)) {
+      yield v;
       return;
     }
     yield v;
