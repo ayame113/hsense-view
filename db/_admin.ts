@@ -16,7 +16,7 @@ import {
 //} from "https://cdn.skypack.dev/firebase-admin@10.0.0/app/index";
 //} from "https://jspm.dev/firebase-admin@10.0.0/app";
 /*
-*/
+
 import * as admin from "https://esm.sh/firebase-admin@10.0.1/app";
 console.log(admin);
 
@@ -24,7 +24,7 @@ const {
   credential,
   initializeApp,
 } = admin;
-/*
+
 * /
 // ENVから読む
 const cert = {
