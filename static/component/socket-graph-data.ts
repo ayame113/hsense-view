@@ -12,6 +12,7 @@ class DataElement extends HTMLElement {
       "rel": "stylesheet",
       "href": new URL("./socket-graph-data.css", import.meta.url),
     }));
+    shadow.appendChild(createElement("div", {}));
     shadow.appendChild(
       new GraphElement(
         new DataList({
@@ -108,6 +109,31 @@ class GraphElement extends HTMLElement {
     this.#offsetX = event.offsetX;
     this.#offsetY = event.offsetY;
   };
+  #onwheel = (event: WheelEvent) => {
+    event.preventDefault();
+    const scaleChange = (1 + event.deltaY * 0.001);
+    {
+      const x = event.offsetX;
+      const newScaleX = this.#position.scaleX * scaleChange;
+      if (!newScaleX) { //0の場合は無効
+        return;
+      }
+      this.#position.originX = x * (this.#position.scaleX - newScaleX) +
+        this.#position.originX;
+      this.#position.scaleX = newScaleX;
+    }
+    {
+      const y = event.offsetY;
+      const newScaleY = this.#position.scaleY * scaleChange;
+      if (!newScaleY) { //0の場合は無効
+        return;
+      }
+      this.#position.originY = y * (newScaleY - this.#position.scaleY) +
+        this.#position.originY;
+      this.#position.scaleY = newScaleY;
+    }
+    this.#shouldRender = true;
+  };
   connectedCallback() {
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
@@ -128,13 +154,15 @@ class GraphElement extends HTMLElement {
     this.#resizeObserver.unobserve(this);
   }
   async #startListeningMoveEvent() {
-    this.addEventListener("mousedown", this.#onmousedown);
+    this.#canvasElement?.addEventListener("mousedown", this.#onmousedown);
     globalThis.addEventListener("mouseup", this.#onmouseup);
-    this.addEventListener("mousemove", this.#onmousemove);
+    this.#canvasElement?.addEventListener("mousemove", this.#onmousemove);
+    this.#canvasElement?.addEventListener("wheel", this.#onwheel);
     this.#onDisconnect.push(() => {
-      this.removeEventListener("mousedown", this.#onmousedown);
+      this.#canvasElement?.removeEventListener("mousedown", this.#onmousedown);
       globalThis.removeEventListener("mouseup", this.#onmouseup);
-      this.removeEventListener("mousemove", this.#onmousemove);
+      this.#canvasElement?.removeEventListener("mousemove", this.#onmousemove);
+      this.#canvasElement?.removeEventListener("wheel", this.#onwheel);
     });
     let isLoop = true;
     this.#onDisconnect.push(() => {
@@ -230,8 +258,8 @@ class DrowerElement extends HTMLElement {
   constructor() {
     super();
     this.#resizeObserver = new ResizeObserver(([entry]) => {
-      const height = entry.contentBoxSize?.[0]?.blockSize ??
-        entry.contentRect.height;
+      const height = (entry.contentBoxSize?.[0]?.blockSize ??
+        entry.contentRect.height) - 36;
       const width = entry.contentBoxSize?.[0]?.inlineSize ??
         entry.contentRect.width;
       if (this.#canvasElement) {
@@ -255,6 +283,11 @@ class DrowerElement extends HTMLElement {
       "rel": "stylesheet",
       "href": new URL("./socket-graph-drower.css", import.meta.url),
     }));
+    const input = createElement("input", { type: "color" });
+    input.addEventListener("change", () => this.#setColor(input.value));
+    const div = createElement("div", {}, [input]);
+    div.style.height = "36px";
+    shadow.appendChild(div);
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
     this.#canvasElement.width = 0;
@@ -264,15 +297,9 @@ class DrowerElement extends HTMLElement {
     });
     shadow.appendChild(this.#canvasElement);
     this.#resizeObserver.observe(this);
-    this.#canvasElement.addEventListener(
-      "mousedown",
-      this.#onmousedown.bind(this),
-    );
-    globalThis.addEventListener("mouseup", this.#onmouseup.bind(this));
-    this.#canvasElement.addEventListener(
-      "mousemove",
-      this.#onmousemove.bind(this),
-    );
+    this.#canvasElement.addEventListener("mousedown", this.#onmousedown);
+    globalThis.addEventListener("mouseup", this.#onmouseup);
+    this.#canvasElement.addEventListener("mousemove", this.#onmousemove);
   }
   disconnectedCallback() {
     this.innerHTML = "";
@@ -281,25 +308,32 @@ class DrowerElement extends HTMLElement {
     globalThis.removeEventListener("mouseup", this.#onmouseup);
     this.#canvasElement?.removeEventListener("mousemove", this.#onmousemove);
   }
-  #onmousedown(event: MouseEvent) {
+  #onmousedown = (event: MouseEvent) => {
     this.#isMouseDown = true;
     this.#ctx?.moveTo(event.offsetX, event.offsetY);
-  }
-  #onmouseup(event: MouseEvent) {
+  };
+  #onmouseup = (event: MouseEvent) => {
+    if (this.#isMouseDown) {
+      this.#ctx?.lineTo(event.offsetX, event.offsetY);
+    }
     this.#isMouseDown = false;
-    this.#ctx?.lineTo(event.offsetX, event.offsetY);
-  }
-  #onmousemove(event: MouseEvent) {
+  };
+  #onmousemove = (event: MouseEvent) => {
     if (!this.#isMouseDown) {
       return;
     }
-    this.#ctx?.lineTo(event.offsetX, event.offsetY);
     if (this.#ctx) {
-      this.#ctx.strokeStyle = "black";
+      this.#ctx.lineTo(event.offsetX, event.offsetY);
       this.#ctx.lineWidth = 3;
       this.#ctx.stroke();
     }
-  }
+  };
+  #setColor = (color: string) => {
+    if (this.#ctx) {
+      this.#ctx.strokeStyle = color;
+      this.#ctx.beginPath();
+    }
+  };
 }
 
 customElements.define("socket-graph-drower", DrowerElement);
@@ -310,13 +344,17 @@ function animationFramePromise() {
   });
 }
 
-function createElement(
-  tagName: string,
-  attr: Record<string, { toString: () => string }>,
+function createElement<K extends keyof HTMLElementTagNameMap>(
+  tagName: K,
+  attr: Record<string, { toString: () => string }> = {},
+  children: (string | HTMLElement)[] = [],
 ) {
   const element = document.createElement(tagName);
   for (const [k, v] of Object.entries(attr)) {
     element.setAttribute(k, v.toString());
+  }
+  for (const child of children) {
+    element.append(child);
   }
   return element;
 }
