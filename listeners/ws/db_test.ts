@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.117.0/testing/asserts.ts";
-import { deferred, delay } from "https://deno.land/std@0.117.0/async/mod.ts";
+import { assertEquals } from "https://deno.land/std@0.121.0/testing/asserts.ts";
+import { deferred, delay } from "https://deno.land/std@0.121.0/async/mod.ts";
 
 import { database } from "../../db/mod.ts";
 import { mockFn, MockWebSocket } from "../../static/utils/test_mock.ts";
