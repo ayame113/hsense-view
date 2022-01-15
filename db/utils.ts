@@ -8,3 +8,11 @@ export async function hash(message: string) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
   return decoder.decode(hex.encode(new Uint8Array(hashBuffer)));
 }
+
+export function isDeploy() {
+  try {
+    return !!Deno.env.get("DENO_DEPLOYMENT_ID");
+  } catch {
+    return false;
+  }
+}

@@ -2,7 +2,7 @@ export interface Database {
   createToken(id: string): Promise<string | null>;
   testToken(id: string, token: string): Promise<boolean>;
   getWriter(id: string, token: string): Promise<Writer | null>;
-  getDataByLimit(id: string, { limit, fromTime }: {
+  getDataByLimit(id: string, opttion?: {
     limit?: number;
     fromTime?: number;
   }): Promise<{
