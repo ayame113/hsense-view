@@ -16,17 +16,11 @@ class SQLiteResources {
   static {
     globalThis.addEventListener("unload", () => {
       console.log("unload");
-      for (const [id, db] of this.#idToDB) {
-        console.log("delete", id);
-        db.close(true);
-      }
+      this.cleanUp();
     });
     globalThis.addEventListener("error", () => {
       console.log("error");
-      for (const [id, db] of this.#idToDB) {
-        console.log("delete", id);
-        db.close(true);
-      }
+      this.cleanUp();
     });
   }
   static async getDB(id: string) {
@@ -65,6 +59,12 @@ class SQLiteResources {
   static #deleteDB(id: string) {
     this.#idToDB.get(id)?.close();
     this.#idToDB.delete(id);
+  }
+  static cleanUp() {
+    for (const [id, db] of this.#idToDB) {
+      console.log("delete", id);
+      db.close(true);
+    }
   }
 }
 
@@ -140,6 +140,9 @@ export class SQLiteDatabase implements DatabaseInterface {
   // deno-lint-ignore require-await
   async deleteDataByTime(_time: number) {
     throw new Error("unimplemented");
+  }
+  cleanUp() {
+    SQLiteResources.cleanUp();
   }
 }
 

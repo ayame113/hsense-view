@@ -66,6 +66,8 @@ Deno.test({
           { time: 2, content: "i: 2" },
         ]);
         await delay(5000);
+        db.cleanUp();
+        await delay(5000);
         console.log("fin");
       })(),
       30 * 1000,
