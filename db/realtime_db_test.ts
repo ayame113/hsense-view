@@ -10,7 +10,7 @@ import {
   FirebaseRealtimeDatabase,
 } from "./realtime_db.ts";
 
-Deno.test("should run test with --location flag", () => {
+Deno.test("no error accessing window.location", () => {
   console.log(window.location);
 });
 

@@ -6,10 +6,6 @@ import {
 import { deadline, delay } from "https://deno.land/std@0.121.0/async/mod.ts";
 import { SQLiteDatabase } from "./sqlite3.ts";
 
-Deno.test("no error accessing window.location", () => {
-  console.log(window.location);
-});
-
 Deno.test({
   name: "sqlite3",
   fn: async () => {
