@@ -26,7 +26,7 @@ jobs:
         with:
           deno-version: v1.x
       - name: 🧐 Type Check
-        run: deno test --no-run ./dev/typecheck.ts
+        run: deno test --no-run --no-check=remote ./dev/typecheck.ts
   Test:
     runs-on: ubuntu-latest
     steps:
