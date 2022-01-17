@@ -1,18 +1,17 @@
 // deno-lint-ignore-file no-explicit-any
-
 import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.121.0/testing/asserts.ts";
 import { deadline, delay } from "https://deno.land/std@0.121.0/async/mod.ts";
-import { SQLiteDatabase } from "./sqlite.ts";
+import { SQLiteDatabase } from "./sqlite3.ts";
 
 Deno.test("no error accessing window.location", () => {
   console.log(window.location);
 });
 
 Deno.test({
-  name: "sqlite",
+  name: "sqlite3",
   fn: async () => {
     return await deadline(
       (async () => {
