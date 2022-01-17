@@ -40,7 +40,7 @@ jobs:
         env:
           FIREBASE_CONFIG_TEST: ${{secrets.FIREBASE_CONFIG_TEST}}
           #DENO_SQLITE_PATH: "./db/sqlite_dll/sqlite3.dll"
-        run: deno test --allow-net --allow-env=FIREBASE_CONFIG_TEST,DENO_SQLITE_PATH --allow-read=. --allow-write=. --allow-ffi --unstable --coverage=coverage --jobs --shuffle
+        run: deno test --allow-net --allow-env=FIREBASE_CONFIG_TEST,DENO_SQLITE_PATH --allow-read=. --allow-write=. --allow-ffi --unstable --coverage=coverage --jobs
       - name: Create coverage report
         run: deno coverage ./coverage --lcov > coverage.lcov
       - name: Codecov
