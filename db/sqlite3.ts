@@ -1,4 +1,4 @@
-import { DB as Database } from "https://deno.land/x/sqlite@v3.2.0/mod.ts";
+import { Database } from "https://deno.land/x/sqlite3@0.3.0/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.121.0/fs/mod.ts";
 import { delay } from "https://deno.land/std@0.121.0/async/mod.ts";
 
@@ -37,18 +37,18 @@ class SQLiteResources {
   }
   static async #createDB(id: string) {
     await ensureDir("./graph_data");
-    const db = new Database(`./graph_data/${id}.db`, { mode: "create" });
+    const db = new Database(`./graph_data/${id}.db`, { create: true });
     this.#idToDB.set(id, db);
     await delay(100);
     // テーブル1
     // key: "id",val: ハッシュ値
-    db.query(`CREATE TABLE IF NOT EXISTS hash(
+    db.execute(`CREATE TABLE IF NOT EXISTS hash(
       id TEXT PRIMARY KEY,
       hash TEXT NOT NULL
     )`);
     // テーブル2
     // key: 時刻(unix time),val: json値
-    db.query(`CREATE TABLE IF NOT EXISTS data(
+    db.execute(`CREATE TABLE IF NOT EXISTS data(
       time INTEGER PRIMARY KEY,
       data TEXT NOT NULL
     )`);
@@ -61,7 +61,7 @@ class SQLiteResources {
   static cleanUp() {
     for (const [id, db] of this.#idToDB) {
       console.log("delete", id);
-      db.close(true);
+      db.close();
     }
   }
 }
@@ -76,19 +76,16 @@ export class SQLiteDatabase implements DatabaseInterface {
     const hashedToken = await hash(token);
     const db = await SQLiteResources.getDB(id, this.#timeout);
     let result: string | null = null;
-    db.transaction(() => {
-      const data = db.query("select hash from hash where id = 'id'");
-      if (data.length) {
-        return;
-      }
-      db.query("INSERT INTO hash VALUES ('id', ?)", [hashedToken]);
+    const data = db.queryArray("select hash from hash where id = 'id'");
+    if (!data.length) {
+      db.queryArray("INSERT INTO hash VALUES ('id', ?)", hashedToken);
       result = token;
-    });
+    }
     return result;
   }
   async testToken(id: string, token: string) {
     const db = await SQLiteResources.getDB(id, this.#timeout);
-    const data = db.query("select hash from hash where id = 'id'");
+    const data = db.queryArray("select hash from hash where id = 'id'");
     const expectedHashedToken = await hash(token);
     if (!data.length) {
       return false;
@@ -113,25 +110,26 @@ export class SQLiteDatabase implements DatabaseInterface {
     const hasFromTime = fromTime != null;
     const db = await SQLiteResources.getDB(id, this.#timeout);
     if (hasLimit && hasFromTime) {
-      const data = db.query<string[]>(
+      const data = db.queryArray<string[]>(
         "SELECT data FROM data WHERE time <= ? ORDER BY time DESC LIMIT ?",
-        [fromTime, limit],
+        fromTime,
+        limit,
       );
       return data.map(([r]) => JSON.parse(r));
     } else if (hasLimit && !hasFromTime) {
-      const data = db.query<string[]>(
+      const data = db.queryArray<string[]>(
         "SELECT data FROM data ORDER BY time DESC LIMIT ?",
-        [limit],
+        limit,
       );
       return data.map(([r]) => JSON.parse(r));
     } else if (!hasLimit && hasFromTime) {
-      const data = db.query<string[]>(
+      const data = db.queryArray<string[]>(
         "SELECT data FROM data WHERE time <= ? ORDER BY time DESC",
-        [fromTime],
+        fromTime,
       );
       return data.map(([r]) => JSON.parse(r));
     } else if (!hasLimit && !hasFromTime) {
-      const data = db.query<string[]>(
+      const data = db.queryArray<string[]>(
         "SELECT data FROM data ORDER BY time DESC",
       );
       return data.map(([r]) => JSON.parse(r));
@@ -157,9 +155,10 @@ class Writer implements WriterInterface {
   }
   async write(data: { [key: string]: number; time: number }) {
     const db = await SQLiteResources.getDB(this.#id, this.#timeout);
-    db.query("INSERT INTO data VALUES (?, ?)", [
+    db.execute(
+      "INSERT INTO data VALUES (?, ?)",
       Math.round(data.time),
       JSON.stringify(data),
-    ]);
+    );
   }
 }

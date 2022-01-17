@@ -7,17 +7,13 @@ import {
 import { deadline, delay } from "https://deno.land/std@0.121.0/async/mod.ts";
 import { SQLiteDatabase } from "./sqlite.ts";
 
-Deno.test("no error accessing window.location", () => {
-  console.log(window.location);
-});
-
 Deno.test({
-  name: "firebase realtime database",
+  name: "sqlite",
   fn: async () => {
     return await deadline(
       (async () => {
         const id = `test-${Math.random()}`.replaceAll(".", "");
-        const db = new SQLiteDatabase();
+        const db = new SQLiteDatabase({ timeout: 1000 });
 
         const token = await db.createToken(id);
         assert(token, "failed to get token");
