@@ -40,7 +40,6 @@ class SQLiteResources {
     const db = new Database(`./graph_data/${id}.db`, { create: true });
     this.#idToDB.set(id, db);
     await delay(100);
-    console.log("createDB");
     // テーブル1
     // key: "id",val: ハッシュ値
     db.execute(`CREATE TABLE IF NOT EXISTS hash(
@@ -53,7 +52,6 @@ class SQLiteResources {
       time INTEGER PRIMARY KEY,
       data TEXT NOT NULL
     )`);
-    console.log("createDB end");
     return db;
   }
   static #deleteDB(id: string) {
