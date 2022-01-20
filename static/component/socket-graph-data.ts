@@ -363,21 +363,6 @@ function createElement<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-function* map<T, R>(target: Iterable<T>, fn: (arg: T) => R) {
-  for (const v of target) {
-    yield fn(v);
-  }
-}
-function* breakIf<T>(target: Iterable<T>, fn: (arg: T) => boolean) {
-  for (const v of target) {
-    if (fn(v)) {
-      yield v;
-      return;
-    }
-    yield v;
-  }
-}
-
 function renderLine(
   ctx: CanvasRenderingContext2D,
   data: Iterable<readonly [number, number]>,
