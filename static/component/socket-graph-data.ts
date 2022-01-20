@@ -3,6 +3,7 @@
 /// <reference lib="dom.asynciterable" />
 
 import { type ListElement } from "../utils/list.ts";
+import { iter } from "../utils/iter.ts";
 import { DataList, type TimeData } from "./data_list.ts";
 
 class DataElement extends HTMLElement {
@@ -208,18 +209,18 @@ class GraphElement extends HTMLElement {
             this.#ctx.canvas.height,
           );
           for (const key of this.#keys) {
+            let breakNext = true;
             renderLine(
               this.#ctx,
-              map(
-                map(
-                  breakIf(
-                    DataList.iterate(pointerForFirst),
-                    (data) => latestTime < data.time,
-                  ),
-                  (v) => [v.time, v[key]] as const,
-                ),
-                this.#valueToCanvasPos.bind(this),
-              ),
+              iter(DataList.iterate(pointerForFirst))
+                .takeWhile((data) => {
+                  // グラフの左端を超えた次の値まで描画する
+                  const shouldBreak = breakNext;
+                  breakNext = data.time < latestTime;
+                  return shouldBreak;
+                })
+                .map((v) => [v.time, v[key]] as const)
+                .map(this.#valueToCanvasPos.bind(this)),
             );
           }
         }
@@ -360,21 +361,6 @@ function createElement<K extends keyof HTMLElementTagNameMap>(
     element.append(child);
   }
   return element;
-}
-
-function* map<T, R>(target: Iterable<T>, fn: (arg: T) => R) {
-  for (const v of target) {
-    yield fn(v);
-  }
-}
-function* breakIf<T>(target: Iterable<T>, fn: (arg: T) => boolean) {
-  for (const v of target) {
-    if (fn(v)) {
-      yield v;
-      return;
-    }
-    yield v;
-  }
 }
 
 function renderLine(

@@ -179,36 +179,3 @@ export class DataList extends TimeList<TimeData> {
     return pointer;
   }
 }
-/*
-const l = new DataList({
-  requestOldData(time) {
-    time ??= Date.now();
-    return Promise.resolve([
-      { time: time - 1 },
-      { time: time - 2 },
-      { time: time - 3 },
-      { time: time - 4 },
-      { time: time - 5 },
-    ]);
-  },
-});
-/*
-await l.requestData();
-await l.requestData({
-  oldestTime: Date.now() - 10,
-  latestTime: Date.now() + 5,
-});
-
-console.log("result:");
-l.dump();
-*/
-/*
-for (let time = 0; time < 10; time++) {
-  l.addLast({ time });
-}
-l.dump();
-const p4 = l.getElementFromTime(4);
-console.log(p4?.value);
-const p2 = l.getElementFromTime(2, p4);
-console.log(p2?.value);
-*/
