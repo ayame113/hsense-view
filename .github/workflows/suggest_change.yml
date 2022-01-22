@@ -15,7 +15,6 @@ jobs:
       - name: 😉 Format
         run: deno fmt
 
-      - run: shfmt -i 2 -ci -w .
       - name: suggester / deno-fmt
         uses: reviewdog/action-suggester@v1
         with:
