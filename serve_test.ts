@@ -26,8 +26,7 @@ async function testWsServer(
     socket.addEventListener("open", resolve);
   });
   const closePromise = new Promise((resolve) => {
-    socket
-      .addEventListener("close", resolve);
+    socket.addEventListener("close", resolve);
   });
   try {
     await fn(socket, openPromise);
