@@ -196,32 +196,88 @@ class GraphElement extends HTMLElement {
         const oldestTime = this.#position.originX;
         const latestTime = oldestTime +
           (this.#position.width * this.#position.scaleX);
+        const max = this.#position.originY;
+        const min = max - (this.#position.height * this.#position.scaleY);
         pointerForFirst = this.#list.getElementFromTime(
           oldestTime,
           pointerForFirst,
         );
         if (this.#ctx && pointerForFirst) {
-          this.#ctx.fillStyle = "white";
-          this.#ctx.fillRect(
-            0,
-            0,
-            this.#ctx.canvas.width,
-            this.#ctx.canvas.height,
-          );
-          for (const key of this.#keys) {
-            let breakNext = true;
-            renderLine(
-              this.#ctx,
-              iter(DataList.iterate(pointerForFirst))
-                .takeWhile((data) => {
-                  // グラフの左端を超えた次の値まで描画する
-                  const shouldBreak = breakNext;
-                  breakNext = data.time < latestTime;
-                  return shouldBreak;
-                })
-                .map((v) => [v.time, v[key]] as const)
-                .map(this.#valueToCanvasPos.bind(this)),
+          {
+            this.#ctx.fillStyle = "white";
+            this.#ctx.fillRect(
+              0,
+              0,
+              this.#ctx.canvas.width,
+              this.#ctx.canvas.height,
             );
+          }
+          {
+            this.#ctx.textAlign = "start";
+            this.#ctx.fillStyle = "black";
+            this.#ctx.font = "normal 16px sans-serif";
+            const scaleLinesX = getScaleLine(
+              oldestTime,
+              latestTime,
+              this.#position.width,
+            );
+            for (const scaleLinePos of scaleLinesX) {
+              renderLine(this.#ctx, [
+                this.#valueToCanvasPos([scaleLinePos, max]),
+                this.#valueToCanvasPos([scaleLinePos, min]),
+              ], { strokeStyle: "gray" });
+            }
+            let preTime: number | undefined;
+            for (const scaleLinePos of scaleLinesX) {
+              const [x, y] = this.#valueToCanvasPos([scaleLinePos, min]);
+              this.#ctx.save();
+              this.#ctx.translate(x - 3, y - 3);
+              this.#ctx.rotate(-Math.PI / 2);
+              this.#ctx.translate(-x + 3, -y + 3);
+              this.#ctx.fillText(
+                `${formatUnixTime(scaleLinePos, preTime)}`,
+                x - 3,
+                y - 3,
+              );
+              this.#ctx.restore();
+              preTime = scaleLinePos;
+            }
+            const scaleLinesY = getScaleLine(
+              min,
+              max,
+              this.#position.width,
+            );
+            for (const scaleLinePos of scaleLinesY) {
+              renderLine(this.#ctx, [
+                this.#valueToCanvasPos([oldestTime, scaleLinePos]),
+                this.#valueToCanvasPos([latestTime, scaleLinePos]),
+              ], { strokeStyle: "gray" });
+            }
+            for (const scaleLinePos of scaleLinesY) {
+              const [x, y] = this.#valueToCanvasPos([oldestTime, scaleLinePos]);
+              this.#ctx.fillText(
+                `${scaleLinePos}`,
+                x + 3,
+                y - 3,
+              );
+            }
+          }
+          {
+            for (const key of this.#keys) {
+              let breakNext = true;
+              renderLine(
+                this.#ctx,
+                iter(DataList.iterate(pointerForFirst))
+                  .takeWhile((data) => {
+                    // グラフの左端を超えた次の値まで描画する
+                    const shouldBreak = breakNext;
+                    breakNext = data.time < latestTime;
+                    return shouldBreak;
+                  })
+                  .map((v) => [v.time, v[key]] as const)
+                  .map(this.#valueToCanvasPos.bind(this)),
+              );
+            }
           }
         }
         this.#list.requestData({
@@ -377,4 +433,82 @@ function renderLine(
     isFirst = false;
   }
   ctx.stroke();
+}
+
+/** 目盛り線を引く位置を取得 */
+function getScaleLine(min: number, max: number, length: number) {
+  // 間隔がだいたい50pxくらいになるように目盛り線を引く
+  const width50px = (max - min) * 50 / length;
+  const digitCount = Math.floor(Math.log10(width50px));
+  const highestDigit = width50px / 10 ** digitCount;
+  let closestN = 1;
+  let distanceToClosestN = Math.abs(highestDigit - 1);
+  for (const n of [2, 5]) {
+    if (Math.abs(highestDigit - n) < distanceToClosestN) {
+      closestN = n;
+      distanceToClosestN = Math.abs(highestDigit - n);
+    }
+  }
+  const scaleLineWidth = closestN * 10 ** digitCount;
+  const minScaleLine = Math.ceil(min / scaleLineWidth) * scaleLineWidth;
+  const maxScaleLine = Math.ceil(max / scaleLineWidth) * scaleLineWidth;
+  const res: number[] = [];
+  for (let i = minScaleLine; i < maxScaleLine; i += scaleLineWidth) {
+    if (i === 0) {
+      // 0の時はNaNになるので例外処理
+      res.push(0);
+    } else {
+      // 上から14桁分で四捨五入
+      const d = 10 ** (Math.floor(Math.log10(Math.abs(i))) + 14);
+      res.push(Math.round(i * d) / d);
+    }
+  }
+  return res;
+}
+
+function formatUnixTime(time: number, prevTime?: number) {
+  const date = new Date(Math.round(time));
+  // date.getMillisecondsは誤差が切り捨てられる
+  const ms = Math.round(time % 1000);
+  if (prevTime === undefined) {
+    if (ms !== 0) {
+      return `${zfill(date.getHours(), 2)}:${zfill(date.getMinutes(), 2)}:${
+        zfill(date.getSeconds(), 2)
+      }.${zfill(ms, 4).replace(/0{0,3}$/, "")}`;
+    }
+    return `${zfill(date.getHours(), 2)}:${zfill(date.getMinutes(), 2)}:${
+      zfill(date.getSeconds(), 2)
+    }`;
+  }
+  const prevDate = new Date(Math.round(prevTime));
+  const hour = date.getHours();
+  const prevHour = prevDate.getHours();
+  const minute = date.getMinutes();
+  const prevMinute = prevDate.getMinutes();
+  const second = date.getSeconds();
+  const prevSecond = prevDate.getSeconds();
+  const prevMs = Math.round(prevTime % 1000);
+  if ((hour !== prevHour || minute !== prevMinute || second !== prevSecond)) {
+    if (ms !== prevMs) {
+      return `${zfill(date.getHours(), 2)}:${zfill(date.getMinutes(), 2)}:${
+        zfill(date.getSeconds(), 2)
+      }.${zfill(ms, 4).replace(/0{0,3}$/, "")}`;
+    } else {
+      return `${zfill(date.getHours(), 2)}:${zfill(date.getMinutes(), 2)}:${
+        zfill(date.getSeconds(), 2)
+      }`;
+    }
+  } else {
+    return `.${zfill(ms, 4).replace(/0{0,3}$/, "")}`;
+  }
+}
+function _formatUnixTimeToDate(time: number) {
+  const date = new Date(time);
+  return `${zfill(date.getFullYear(), 4)}.${zfill(date.getMonth() + 1, 2)}.${
+    zfill(date.getDay(), 2)
+  }`;
+}
+
+function zfill(str: { toString(): string }, digit: number) {
+  return `${"0".repeat(digit)}${str}`.slice(-digit);
 }
