@@ -9,3 +9,6 @@ socket-graph-data-inner {
 	height: 300px;
 	width: 100%;
 }
+socket-graph-data-inner canvas {
+	cursor: move;
+}

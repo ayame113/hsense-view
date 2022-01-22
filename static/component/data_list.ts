@@ -178,4 +178,7 @@ export class DataList extends TimeList<TimeData> {
     }
     return pointer;
   }
+  startStreaming() {
+    new EventSource("");
+  }
 }
