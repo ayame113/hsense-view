@@ -1,4 +1,8 @@
-import { assertEquals } from "https://deno.land/std@0.122.0/testing/asserts.ts";
+import { assertEquals
+
+
+
+ } from "https://deno.land/std@0.122.0/testing/asserts.ts";
 import { delay } from "https://deno.land/std@0.122.0/async/mod.ts";
 
 import { startServer } from "./serve.ts";
@@ -7,12 +11,15 @@ async function testServer(
   path: string,
   fn: (res: Response) => void | Promise<void>,
 ) {
-  const { server, controller } = startServer();
+  const { server, controller 
+
+
+} = startServer();
   try {
     await fn(await fetch(new URL(path, "http://localhost:8000/")));
   } finally {
     controller.abort();
-    await server;
+    await server
   }
 }
 
@@ -26,8 +33,9 @@ async function testWsServer(
     socket.addEventListener("open", resolve);
   });
   const closePromise = new Promise((resolve) => {
-    socket.addEventListener("close", resolve);
-  });
+    socket
+.addEventListener("close", resolve);
+});
   try {
     await fn(socket, openPromise);
   } finally {
