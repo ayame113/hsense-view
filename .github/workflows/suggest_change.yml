@@ -14,21 +14,7 @@ jobs:
           deno-version: v1.x
       - name: 😉 Format
         run: deno fmt
-
-      - name: suggester / deno-fmt
+      - name: Create Suggestion
         uses: reviewdog/action-suggester@v1
         with:
           tool_name: deno fmt
-
-      # Need to install latest shellcheck to use diff output format as of writing (2020/08/03).
-      # - name: install shellcheck
-      #   run: |
-      #     scversion="latest"
-      #     wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
-      #     sudo cp "shellcheck-${scversion}/shellcheck" /usr/local/bin/
-      #     rm -rf "shellcheck-${scversion}/shellcheck"
-      # - run: shellcheck -f diff $(shfmt -f .) | patch -p1
-      # - name: suggester / shellcheck
-      #   uses: reviewdog/action-suggester@v1
-      #   with:
-      #     tool_name: shellcheck

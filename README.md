@@ -1,7 +1,3 @@
 # socket-graph
 
-
-
-
-
 テスト中
