@@ -502,7 +502,7 @@ function formatUnixTime(time: number, prevTime?: number) {
     return `.${zfill(ms, 4).replace(/0{0,3}$/, "")}`;
   }
 }
-function formatUnixTimeToDate(time: number) {
+function _formatUnixTimeToDate(time: number) {
   const date = new Date(time);
   return `${zfill(date.getFullYear(), 4)}.${zfill(date.getMonth() + 1, 2)}.${
     zfill(date.getDay(), 2)
