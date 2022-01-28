@@ -18,14 +18,26 @@ class DataElement extends HTMLElement {
       new GraphElement(
         new DataList({
           async requestOldData(time) {
+            console.log(`request: ${time}`);
             await new Promise((ok) => setTimeout(ok, 500));
-            time ??= Date.now();
-            time = Math.floor(time);
-            const res = [];
-            for (let i = 1; i < 50; i++) {
-              res.push({ time: time - i, i: Math.sin((time - i) / 5) });
-            }
-            return res;
+            // time ??= Date.now();
+            // time = Math.min(time, Date.now());
+            // time = Math.floor(time);
+            // const res = [];
+            // for (let i = 1; i < 50; i++) {
+            //   res.push({
+            //     time: time - i * 1000,
+            //     i: Math.sin((time - i * 1000) / 5000),
+            //   });
+            // }
+            // return res;
+            const res = time === undefined
+              ? await fetch(`/api/data/sakura?limit=50`)
+              : await fetch(`/api/data/sakura?fromTime=${time}&limit=50`);
+            return (await res.json()).data;
+          },
+          getEventSource() {
+            return new EventSource("/sse/data/sakura");
           },
         }),
         ["i"],
@@ -98,8 +110,19 @@ class GraphElement extends HTMLElement {
       return;
     }
     if (this.#offsetX != null) {
-      this.#position.originX -= (event.offsetX - this.#offsetX) *
-        this.#position.scaleX;
+      const newOriginX = this.#position.originX -
+        (event.offsetX - this.#offsetX) * this.#position.scaleX;
+      const posInfo = checkGraphPosition({
+        scaleX: this.#position.scaleX,
+        originX: newOriginX,
+        width: this.#position.width,
+      });
+      if (posInfo.trackRealtime) {
+        this.#startTrackRealtimeData();
+      } else {
+        this.#stopTrackRealtimeData();
+      }
+      this.#position.originX = posInfo.newOriginX ?? newOriginX;
       this.#shouldRender = true;
     }
     if (this.#offsetY != null) {
@@ -113,17 +136,28 @@ class GraphElement extends HTMLElement {
   #onwheel = (event: WheelEvent) => {
     event.preventDefault();
     const scaleChange = (1 + event.deltaY * 0.001);
-    {
+    if (!event.shiftKey) {
       const x = event.offsetX;
       const newScaleX = this.#position.scaleX * scaleChange;
       if (!newScaleX) { //0の場合は無効
         return;
       }
-      this.#position.originX = x * (this.#position.scaleX - newScaleX) +
+      const newOriginX = x * (this.#position.scaleX - newScaleX) +
         this.#position.originX;
+      const posInfo = checkGraphPosition({
+        scaleX: newScaleX,
+        originX: newOriginX,
+        width: this.#position.width,
+      });
+      if (posInfo.trackRealtime) {
+        this.#startTrackRealtimeData();
+      } else {
+        this.#stopTrackRealtimeData();
+      }
+      this.#position.originX = posInfo.newOriginX ?? newOriginX;
       this.#position.scaleX = newScaleX;
     }
-    {
+    if (!event.ctrlKey) {
       const y = event.offsetY;
       const newScaleY = this.#position.scaleY * scaleChange;
       if (!newScaleY) { //0の場合は無効
@@ -144,6 +178,9 @@ class GraphElement extends HTMLElement {
       desynchronized: true,
     });
     this.appendChild(this.#canvasElement);
+    const controller = new AbortController();
+    this.#list.onUpdate(() => this.#shouldRender = true, controller);
+    this.#onDisconnect.push(() => controller.abort());
     this.#startListeningMoveEvent();
     this.#resizeObserver.observe(this);
   }
@@ -190,8 +227,17 @@ class GraphElement extends HTMLElement {
     }
 
     let pointerForFirst: ListElement<TimeData> | undefined;
+    let preTime: number | undefined;
     while (isLoop) {
-      await animationFramePromise();
+      const currentTime = await animationFramePromise();
+      if (this.#isTrackingRealtimeData) {
+        // 時刻更新に合わせて描画範囲を追尾
+        if (preTime) {
+          this.#position.originX += currentTime - preTime;
+        }
+        this.#shouldRender = true;
+      }
+      preTime = currentTime;
       if (this.#shouldRender) {
         const oldestTime = this.#position.originX;
         const latestTime = oldestTime +
@@ -235,7 +281,12 @@ class GraphElement extends HTMLElement {
               this.#ctx.rotate(-Math.PI / 2);
               this.#ctx.translate(-x + 3, -y + 3);
               this.#ctx.fillText(
-                `${formatUnixTime(scaleLinePos, preTime)}`,
+                `${
+                  formatUnixTime(
+                    roundWithSignificantDigit(scaleLinePos, 14),
+                    preTime,
+                  )
+                }`,
                 x - 3,
                 y - 3,
               );
@@ -256,11 +307,18 @@ class GraphElement extends HTMLElement {
             for (const scaleLinePos of scaleLinesY) {
               const [x, y] = this.#valueToCanvasPos([oldestTime, scaleLinePos]);
               this.#ctx.fillText(
-                `${scaleLinePos}`,
+                `${roundWithSignificantDigit(scaleLinePos, 10)}`,
                 x + 3,
                 y - 3,
               );
             }
+          }
+          {
+            const now = Date.now();
+            renderLine(this.#ctx, [
+              this.#valueToCanvasPos([now, max]),
+              this.#valueToCanvasPos([now, min]),
+            ], { strokeStyle: "green" });
           }
           {
             for (const key of this.#keys) {
@@ -283,12 +341,7 @@ class GraphElement extends HTMLElement {
         this.#list.requestData({
           oldestTime: Math.floor(oldestTime),
           latestTime: Math.ceil(latestTime),
-        })
-          .then((loaded) => {
-            if (loaded) {
-              this.#shouldRender = true;
-            }
-          });
+        });
       }
       this.#shouldRender = false;
     }
@@ -305,6 +358,19 @@ class GraphElement extends HTMLElement {
       cy * this.#position.scaleY - this.#position.originY,
     ] as const;
   }*/
+  #isTrackingRealtimeData = false;
+  #startTrackRealtimeData() {
+    if (!this.#isTrackingRealtimeData) {
+      this.#list.startStreaming();
+    }
+    this.#isTrackingRealtimeData = true;
+  }
+  #stopTrackRealtimeData() {
+    if (this.#isTrackingRealtimeData) {
+      this.#list.stopStreaming();
+    }
+    this.#isTrackingRealtimeData = false;
+  }
 }
 
 customElements.define("socket-graph-data-inner", GraphElement);
@@ -454,14 +520,15 @@ function getScaleLine(min: number, max: number, length: number) {
   const maxScaleLine = Math.ceil(max / scaleLineWidth) * scaleLineWidth;
   const res: number[] = [];
   for (let i = minScaleLine; i < maxScaleLine; i += scaleLineWidth) {
-    if (i === 0) {
-      // 0の時はNaNになるので例外処理
-      res.push(0);
-    } else {
-      // 上から14桁分で四捨五入
-      const d = 10 ** (Math.floor(Math.log10(Math.abs(i))) + 14);
-      res.push(Math.round(i * d) / d);
-    }
+    res.push(i);
+    // if (i === 0) {
+    //   // 0の時はNaNになるので例外処理
+    //   res.push(0);
+    // } else {
+    //   // 上から14桁分で四捨五入
+    //   const d = 10 ** (Math.floor(Math.log10(Math.abs(i))) + 14);
+    //   res.push(Math.round(i * d) / d);
+    // }
   }
   return res;
 }
@@ -511,4 +578,43 @@ function _formatUnixTimeToDate(time: number) {
 
 function zfill(str: { toString(): string }, digit: number) {
   return `${"0".repeat(digit)}${str}`.slice(-digit);
+}
+
+/** 数値{n}を有効数字{significantDigit}で四捨五入する */
+function roundWithSignificantDigit(n: number, significantDigit: number) {
+  if (n === 0) {
+    // 0の時はNaNになるので例外処理
+    return 0;
+  } else {
+    // 上から14桁分で四捨五入
+    const d = 10 ** (Math.floor(Math.log10(Math.abs(n))) + significantDigit);
+    return Math.round(n * d) / d;
+  }
+}
+
+/**
+ * グラフの表示範囲と現在時刻の関係をチェックする
+ * - 現在位置がグラフ中央より右にある場合：時間の経過に従ってグラフの表示範囲を更新
+ * - 現在位置がグラフ中央より左にある場合：表示不可
+ */
+function checkGraphPosition(
+  { scaleX, originX, width }: {
+    scaleX: number;
+    originX: number;
+    width: number;
+  },
+): { trackRealtime: boolean; newOriginX?: number } {
+  /** グラフ中心の時刻 */
+  const latestTime = originX + width * scaleX;
+  const now = Date.now();
+  if (now < latestTime) {
+    const midTime = originX + width * scaleX * 0.5;
+    if (now < midTime) {
+      const newOriginX = now - width * scaleX * 0.5;
+      return { trackRealtime: true, newOriginX };
+    } else {
+      return { trackRealtime: true };
+    }
+  }
+  return { trackRealtime: false };
 }
