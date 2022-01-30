@@ -1,5 +1,6 @@
 :host{
 	display: block;
+	padding: 1em;
 }
 socket-graph-data-inner {
 	display: block;
@@ -11,4 +12,7 @@ socket-graph-data-inner {
 socket-graph-data-inner canvas {
 	cursor: move;
 	border: 1px solid gray;
+}
+socket-graph-data-inner label{
+	display: block;
 }

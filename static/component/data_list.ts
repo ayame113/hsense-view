@@ -68,7 +68,9 @@ export class DataList extends TimeList<TimeData> {
     this.#updateMaxValue(Object.entries(target.#max));
     this.#updateMinValue(Object.entries(target.#min));
     this.#updateKey(Object.entries(target.#min));
-    this.#latestTime = target.#latestTime;
+    this.#latestTime = target.#latestTime && this.#latestTime
+      ? Math.max(target.#latestTime, this.#latestTime)
+      : target.#latestTime ?? this.#latestTime;
     super.margeLast(target);
     for (const fn of this.#onUpdateFunc) {
       fn();
@@ -110,7 +112,10 @@ export class DataList extends TimeList<TimeData> {
       return Math.min(...val);
     }
   }
+  /** この時刻より前のデータの読み込みは完了している */
   #latestTime: number | null = null;
+  /** この時刻より前にデータは存在しないので、読み込む必要はない */
+  #oldestTime: number | null = null;
   #loadingPromise: Promise<void | boolean>;
   // 起点時刻～終了時刻の前後部分も一気に読み込んでしまう
   // 何も指定せず1回読み込み(リストは空)
@@ -139,6 +144,9 @@ export class DataList extends TimeList<TimeData> {
         ? latestTime * 2 - oldestTime
         : latestTime;
       if (this.first.done) {
+        if (this.#latestTime === Infinity) {
+          return;
+        }
         // リストが空の場合：初期データ読み込み（範囲指定）
         await this.#internalRequestData(
           oldestTimeForAdditionalRange,
@@ -160,6 +168,7 @@ export class DataList extends TimeList<TimeData> {
         await newData.#internalRequestData(
           this.#latestTime,
           latestTimeForAdditionalRange,
+          true,
         );
         this.margeLast(newData);
         loaded = true;
@@ -171,6 +180,7 @@ export class DataList extends TimeList<TimeData> {
   async #internalRequestData(
     oldestTime: number | null,
     latestTime: number | null,
+    stopLoadingIfOldestTime = false,
   ) {
     // 古い側のデータを読み込んでリストの前に繋げていく
     let loadStartTime: number | undefined;
@@ -184,10 +194,24 @@ export class DataList extends TimeList<TimeData> {
     } else {
       loadStartTime = this.first.value.time;
     }
+    if (
+      loadStartTime && this.#oldestTime && loadStartTime <= this.#oldestTime
+    ) {
+      // this.#oldestTimeより古い時刻を読み込んでも何も返ってこない
+      return;
+    }
     const result = await this.#requestOldData(loadStartTime);
+    if (result.length === 0) {
+      this.#oldestTime = this.#oldestTime == null
+        ? loadStartTime ?? null
+        : Math.max(loadStartTime ?? Date.now(), this.#oldestTime);
+      return;
+    }
     let breaked = false;
     for (const data of result) {
-      if (oldestTime !== null && data.time < oldestTime) {
+      if (
+        stopLoadingIfOldestTime && oldestTime !== null && data.time < oldestTime
+      ) {
         breaked = true;
         break;
       }
@@ -201,7 +225,11 @@ export class DataList extends TimeList<TimeData> {
       oldestTime !== null && !this.first.done &&
       oldestTime < this.first.value.time
     ) {
-      await this.#internalRequestData(oldestTime, null);
+      await this.#internalRequestData(
+        oldestTime,
+        null,
+        stopLoadingIfOldestTime,
+      );
     }
   }
   getElementFromTime(time: number, initialPointer?: ListElement<TimeData>) {
@@ -239,7 +267,7 @@ export class DataList extends TimeList<TimeData> {
           this.#latestTime = Infinity;
           ok(); // ^_^
         });
-      }).catch();
+      }).catch(console.error);
       this.#eventSource.addEventListener("message", (e) => {
         const data: TimeData = JSON.parse(e.data);
         loadLatestData.then(() => {

@@ -330,6 +330,18 @@ class GraphElement extends HTMLElement {
         height: this.#position.height,
       };
       console.log(this.#position);
+    } else {
+      // 初期データなし
+      // 現在時刻が中央になるように合わせて、streaming開始
+      this.#position = {
+        scaleX: 60 * 1000 / this.#position.width,
+        scaleY: 2 / this.#position.height,
+        originX: Date.now() - 30 * 1000,
+        originY: 1,
+        width: this.#position.width,
+        height: this.#position.height,
+      };
+      this.#startTrackRealtimeData();
     }
 
     let pointerForFirst: ListElement<TimeData> | undefined;
@@ -354,7 +366,7 @@ class GraphElement extends HTMLElement {
           oldestTime,
           pointerForFirst,
         );
-        if (this.#ctx && pointerForFirst) {
+        if (this.#ctx) {
           {
             this.#ctx.fillStyle = "white";
             this.#ctx.fillRect(
@@ -426,7 +438,7 @@ class GraphElement extends HTMLElement {
               this.#valueToCanvasPos([now, min]),
             ], { strokeStyle: "#00ff00", lineWidth: 2 });
           }
-          {
+          if (pointerForFirst) {
             for (const key of this.#keys) {
               let breakNext = true;
               renderLine(
@@ -713,7 +725,7 @@ function formatUnixTime(time: number, prevTime?: number) {
 function formatUnixTimeToDate(time: number) {
   const date = new Date(time);
   return `${zfill(date.getFullYear(), 4)}.${zfill(date.getMonth() + 1, 2)}.${
-    zfill(date.getDay(), 2)
+    zfill(date.getDate(), 2)
   } - ${formatUnixTime(time)}`;
 }
 

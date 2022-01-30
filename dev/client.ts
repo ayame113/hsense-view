@@ -9,22 +9,16 @@ await new Promise((ok) => socket.addEventListener("open", ok));
 
 socket.send(TOKEN);
 
-const wait = 5000;
+const wait = 2000;
 while (true) {
   await delay(wait);
   const time = Date.now();
-  const data = { time, i: Math.sin(time / (wait * 5)) };
+  const data = {
+    time,
+    i: Math.sin(time / (wait * 5)),
+    i2: Math.sin(time / (wait * 5) + Math.PI * 2 / 3),
+    i3: Math.sin(time / (wait * 5) + Math.PI * 4 / 3),
+  };
   console.log(data);
   socket.send(JSON.stringify(data));
-  {
-    await delay(wait);
-    const time = Date.now();
-    const data = {
-      time,
-      i: Math.sin(time / (wait * 5)),
-      i2: Math.cos(time / (wait * 5)),
-    };
-    console.log(data);
-    socket.send(JSON.stringify(data));
-  }
 }
