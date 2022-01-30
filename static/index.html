@@ -16,7 +16,8 @@
 	<script type="module">
 		const id = new URL(location.href).searchParams.get("id");
 		if (!id) {
-			alert("グラフを表示できません");
+			console.error("グラフを表示できません");
+			// alert("グラフを表示できません");
 			// location.href = "/"
 		}
 		const main = document.querySelector("main");
