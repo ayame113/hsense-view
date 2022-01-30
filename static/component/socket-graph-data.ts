@@ -6,15 +6,62 @@ import { type ListElement } from "../utils/list.ts";
 import { iter } from "../utils/iter.ts";
 import { DataList, type TimeData } from "./data_list.ts";
 
+class ColorRegistry {
+  #colors: Map<string, string>;
+  constructor() {
+    this.#colors = new Map();
+  }
+  set(key: string, value: string) {
+    this.#colors.set(key, value);
+  }
+  get(key: string) {
+    return this.#colors.get(key) ?? (() => {
+      const color = stringToColor(key);
+      this.#colors.set(key, color);
+      return color;
+    })();
+  }
+}
+
 class DataElement extends HTMLElement {
+  static observedAttributes = ["data-source-url", "data-source-streaming-url"];
+  #shadow: ShadowRoot;
+  attr: {
+    sourceUrl: string | null;
+    sourceStreamingUrl: string | null;
+  };
+  constructor() {
+    super();
+    this.attr = {
+      sourceUrl: null,
+      sourceStreamingUrl: null,
+    };
+    this.#shadow = this.attachShadow({ mode: "closed" });
+  }
   connectedCallback() {
-    const shadow = this.attachShadow({ mode: "closed" });
-    shadow.appendChild(createElement("link", {
+    this.init();
+  }
+  attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
+    if (name === "data-source-url") {
+      this.attr.sourceUrl = newValue;
+    }
+    if (name === "data-source-streaming-url") {
+      this.attr.sourceStreamingUrl = newValue;
+    }
+    this.init();
+  }
+  init() {
+    if (!this.attr.sourceUrl || !this.attr.sourceStreamingUrl) {
+      return;
+    }
+    this.#shadow.innerHTML = "";
+    this.#shadow.appendChild(createElement("link", {
       "rel": "stylesheet",
       "href": new URL("./socket-graph-data.css", import.meta.url),
     }));
-    shadow.appendChild(createElement("div", {}));
-    shadow.appendChild(
+    this.#shadow.appendChild(createElement("div", {}));
+    const { sourceUrl, sourceStreamingUrl } = this.attr;
+    this.#shadow.appendChild(
       new GraphElement(
         new DataList({
           async requestOldData(time) {
@@ -31,17 +78,19 @@ class DataElement extends HTMLElement {
             //   });
             // }
             // return res;
-            const res = time === undefined
-              ? await fetch(`/api/data/sakura?limit=50`)
-              : await fetch(`/api/data/sakura?fromTime=${time}&limit=50`);
+            const res = await fetch(
+              sourceUrl
+                .replaceAll("%fromTime%", `${time || ""}`)
+                .replaceAll("%limit%", "50"),
+            );
             return (await res.json()).data;
           },
           getEventSource() {
-            return new EventSource("/sse/data/sakura");
+            return new EventSource(sourceStreamingUrl);
           },
         }),
-        ["i"],
-        { width: 200, height: 200 },
+        new Set(),
+        { width: 200, height: 400 },
       ),
     );
   }
@@ -59,13 +108,16 @@ class GraphElement extends HTMLElement {
   #shouldRender = false;
   #canvasElement?: HTMLCanvasElement;
   #ctx: CanvasRenderingContext2D | null = null;
-  #keys: string[];
+  #keys: Set<string>;
   #list: DataList;
   #onDisconnect: (() => void)[];
   #resizeObserver: ResizeObserver;
+  #colorRegistry: ColorRegistry;
+  #headerElement?: HTMLDivElement;
+  #footerElement?: HTMLDivElement;
   constructor(
     dataList: DataList,
-    dataKey: string[],
+    dataKey: Set<string>,
     { width, height }: { width: number; height: number },
   ) {
     super();
@@ -79,12 +131,15 @@ class GraphElement extends HTMLElement {
       width,
       height,
     };
+    this.style.height = `${height}px`;
     this.#onDisconnect = [];
     this.#resizeObserver = new ResizeObserver(([entry]) => {
-      const height = entry.contentBoxSize?.[0]?.blockSize ??
-        entry.contentRect.height;
-      const width = entry.contentBoxSize?.[0]?.inlineSize ??
-        entry.contentRect.width;
+      const height = (entry.contentBoxSize?.[0]?.blockSize ??
+        entry.contentRect.height) -
+        (this.#headerElement?.clientHeight ?? 0) -
+        (this.#footerElement?.clientHeight ?? 0) - 10;
+      const width = (entry.contentBoxSize?.[0]?.inlineSize ??
+        entry.contentRect.width) - 2; // border分引く
       this.#position.height = height;
       this.#position.width = width;
       if (this.#canvasElement) {
@@ -93,6 +148,7 @@ class GraphElement extends HTMLElement {
         this.#shouldRender = true;
       }
     });
+    this.#colorRegistry = new ColorRegistry();
   }
   #isMouseDown = false;
   #onmousedown = () => {
@@ -170,6 +226,27 @@ class GraphElement extends HTMLElement {
     this.#shouldRender = true;
   };
   connectedCallback() {
+    const table = createElement("table");
+    for (const keyName of this.#keys) {
+      table.appendChild(
+        selectGraphDataButton(keyName, this.#colorRegistry.get(keyName), {
+          onCheck: (v) => {
+            if (v) {
+              this.#keys.add(keyName);
+            } else {
+              this.#keys.delete(keyName);
+            }
+            this.#shouldRender = true;
+          },
+          onUpdateColor: (v) => {
+            this.#colorRegistry.set(keyName, v);
+            this.#shouldRender = true;
+          },
+        }),
+      );
+    }
+    this.#headerElement = createElement("div", null, null, [table]);
+    this.appendChild(this.#headerElement);
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
     this.#canvasElement.width = 0;
@@ -178,8 +255,37 @@ class GraphElement extends HTMLElement {
       desynchronized: true,
     });
     this.appendChild(this.#canvasElement);
+    this.#footerElement = createElement("div", null, null, ["a"]);
+    this.appendChild(this.#footerElement);
     const controller = new AbortController();
     this.#list.onUpdate(() => this.#shouldRender = true, controller);
+    this.#list.onKeyUpdate((keyName) => {
+      this.#keys.add(keyName);
+      table.appendChild(
+        selectGraphDataButton(keyName, this.#colorRegistry.get(keyName), {
+          onCheck: (v) => {
+            if (v) {
+              this.#keys.add(keyName);
+            } else {
+              this.#keys.delete(keyName);
+            }
+            this.#shouldRender = true;
+          },
+          onUpdateColor: (v) => {
+            this.#colorRegistry.set(keyName, v);
+            this.#shouldRender = true;
+          },
+        }),
+      );
+      // 要素追加に合わせて高さ更新
+      const height = this.clientHeight -
+        (this.#headerElement?.clientHeight ?? 0) -
+        (this.#footerElement?.clientHeight ?? 0) - 10;
+      this.#position.height = height;
+      if (this.#canvasElement) {
+        this.#canvasElement.height = height;
+      }
+    }, controller);
     this.#onDisconnect.push(() => controller.abort());
     this.#startListeningMoveEvent();
     this.#resizeObserver.observe(this);
@@ -296,7 +402,7 @@ class GraphElement extends HTMLElement {
             const scaleLinesY = getScaleLine(
               min,
               max,
-              this.#position.width,
+              this.#position.height,
             );
             for (const scaleLinePos of scaleLinesY) {
               renderLine(this.#ctx, [
@@ -318,7 +424,7 @@ class GraphElement extends HTMLElement {
             renderLine(this.#ctx, [
               this.#valueToCanvasPos([now, max]),
               this.#valueToCanvasPos([now, min]),
-            ], { strokeStyle: "green" });
+            ], { strokeStyle: "#00ff00", lineWidth: 2 });
           }
           {
             for (const key of this.#keys) {
@@ -332,8 +438,10 @@ class GraphElement extends HTMLElement {
                     breakNext = data.time < latestTime;
                     return shouldBreak;
                   })
+                  .filter((v) => v[key] != null)
                   .map((v) => [v.time, v[key]] as const)
                   .map(this.#valueToCanvasPos.bind(this)),
+                { strokeStyle: this.#colorRegistry.get(key) },
               );
             }
           }
@@ -342,6 +450,10 @@ class GraphElement extends HTMLElement {
           oldestTime: Math.floor(oldestTime),
           latestTime: Math.ceil(latestTime),
         });
+        if (this.#footerElement) {
+          this.#footerElement
+            .innerText = `[${formatUnixTimeToDate(oldestTime)}]`;
+        }
       }
       this.#shouldRender = false;
     }
@@ -371,6 +483,38 @@ class GraphElement extends HTMLElement {
     }
     this.#isTrackingRealtimeData = false;
   }
+}
+function selectGraphDataButton(
+  keyName: string,
+  color: string,
+  { onCheck, onUpdateColor }: {
+    onCheck(isChecked: boolean): void;
+    onUpdateColor(color: string): void;
+  },
+) {
+  createElement("input").addEventListener("change", (e) => {
+    e.currentTarget;
+  });
+  return createElement("tr", null, null, [
+    createElement("td", null, null, [
+      createElement("label", null, null, [
+        createElement("input", { type: "checkbox", checked: true }, (e) => {
+          e.addEventListener("change", (e) => {
+            onCheck((e.currentTarget as HTMLInputElement).checked);
+          });
+        }),
+        keyName,
+      ]),
+    ]),
+    createElement("td", null, null, [
+      createElement("input", { type: "color" }, (e) => {
+        e.value = cssColorToColorCode(color);
+        e.addEventListener("change", (e) => {
+          onUpdateColor((e.currentTarget as HTMLInputElement).value);
+        });
+      }),
+    ]),
+  ]);
 }
 
 customElements.define("socket-graph-data-inner", GraphElement);
@@ -411,7 +555,7 @@ class DrowerElement extends HTMLElement {
     }));
     const input = createElement("input", { type: "color" });
     input.addEventListener("change", () => this.#setColor(input.value));
-    const div = createElement("div", {}, [input]);
+    const div = createElement("div", null, null, [input]);
     div.style.height = "36px";
     shadow.appendChild(div);
     this.#canvasElement = document.createElement("canvas");
@@ -472,15 +616,19 @@ function animationFramePromise() {
 
 function createElement<K extends keyof HTMLElementTagNameMap>(
   tagName: K,
-  attr: Record<string, { toString: () => string }> = {},
-  children: (string | HTMLElement)[] = [],
+  attr?: Record<string, { toString: () => string }> | null,
+  cb?: ((e: HTMLElementTagNameMap[K]) => void) | null,
+  children?: (string | Node)[],
 ) {
   const element = document.createElement(tagName);
-  for (const [k, v] of Object.entries(attr)) {
+  for (const [k, v] of Object.entries(attr ?? {})) {
     element.setAttribute(k, v.toString());
   }
-  for (const child of children) {
+  for (const child of children ?? []) {
     element.append(child);
+  }
+  if (cb) {
+    cb(element);
   }
   return element;
 }
@@ -507,6 +655,7 @@ function getScaleLine(min: number, max: number, length: number) {
   const width50px = (max - min) * 50 / length;
   const digitCount = Math.floor(Math.log10(width50px));
   const highestDigit = width50px / 10 ** digitCount;
+  // 10,5,2の間隔でどれが一番50pxに近いか判定
   let closestN = 1;
   let distanceToClosestN = Math.abs(highestDigit - 1);
   for (const n of [2, 5]) {
@@ -521,14 +670,6 @@ function getScaleLine(min: number, max: number, length: number) {
   const res: number[] = [];
   for (let i = minScaleLine; i < maxScaleLine; i += scaleLineWidth) {
     res.push(i);
-    // if (i === 0) {
-    //   // 0の時はNaNになるので例外処理
-    //   res.push(0);
-    // } else {
-    //   // 上から14桁分で四捨五入
-    //   const d = 10 ** (Math.floor(Math.log10(Math.abs(i))) + 14);
-    //   res.push(Math.round(i * d) / d);
-    // }
   }
   return res;
 }
@@ -569,11 +710,11 @@ function formatUnixTime(time: number, prevTime?: number) {
     return `.${zfill(ms, 4).replace(/0{0,3}$/, "")}`;
   }
 }
-function _formatUnixTimeToDate(time: number) {
+function formatUnixTimeToDate(time: number) {
   const date = new Date(time);
   return `${zfill(date.getFullYear(), 4)}.${zfill(date.getMonth() + 1, 2)}.${
     zfill(date.getDay(), 2)
-  }`;
+  } - ${formatUnixTime(time)}`;
 }
 
 function zfill(str: { toString(): string }, digit: number) {
@@ -617,4 +758,21 @@ function checkGraphPosition(
     }
   }
   return { trackRealtime: false };
+}
+
+const encoder = new TextEncoder();
+function stringToColor(str: string) {
+  const h = encoder.encode(str).reduce((p, c) => (p * c) % 360);
+  return `hsl(${(h * h * h) % 360}, 100%, 25%)`;
+}
+
+const div = document.createElement("div");
+document.head.appendChild(div);
+/** 'hsl(*, *, *)' を '#******' に変換する */
+function cssColorToColorCode(hslText: string) {
+  div.style.color = hslText;
+  const { r, g, b } = getComputedStyle(div).color
+    .match(/rgb\((?<r>[0-9]*), (?<g>[0-9]*), (?<b>[0-9]*)\)/)
+    ?.groups as { r: string; g: string; b: string };
+  return "#" + [r, g, b].map((v) => zfill((+v).toString(16), 2)).join("");
 }

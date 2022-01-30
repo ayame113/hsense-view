@@ -10,10 +10,21 @@
 		<header>
 			<h1>＜タイトル＞</h1>
 		</header>
-		<main>
-			<socket-graph-data></socket-graph-data>
-			<socket-graph-drower></socket-graph-drower>
-		</main>
+		<main></main>
 		<footer>フッター</footer>
 	</body>
+	<script type="module">
+		const id = new URL(location.href).searchParams.get("id");
+		if (!id) {
+			alert("グラフを表示できません");
+			// location.href = "/"
+		}
+		const main = document.querySelector("main");
+		const graph = document.createElement("socket-graph-data");
+		graph.setAttribute("data-source-url", `/api/data/${id}?fromTime=%fromTime%&limit=%limit%`);
+		graph.setAttribute("data-source-streaming-url", `/sse/data/${id}`);
+		main.appendChild(graph);
+		const drower = document.createElement("socket-graph-drower");
+		main.appendChild(drower);
+	</script>
 </html>

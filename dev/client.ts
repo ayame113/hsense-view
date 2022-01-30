@@ -16,4 +16,15 @@ while (true) {
   const data = { time, i: Math.sin(time / (wait * 5)) };
   console.log(data);
   socket.send(JSON.stringify(data));
+  {
+    await delay(wait);
+    const time = Date.now();
+    const data = {
+      time,
+      i: Math.sin(time / (wait * 5)),
+      i2: Math.cos(time / (wait * 5)),
+    };
+    console.log(data);
+    socket.send(JSON.stringify(data));
+  }
 }

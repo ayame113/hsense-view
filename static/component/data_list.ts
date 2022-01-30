@@ -8,6 +8,8 @@ export class DataList extends TimeList<TimeData> {
   #requestOldData: (fromTime?: number) => Promise<TimeData[]>;
   #getEventSource: () => EventSource;
   #onUpdateFunc: Set<() => void>;
+  #onUpdateKeyFunc: Set<(str: string) => void>;
+  #keys: Set<string>;
   empty = true;
   constructor({ requestOldData, getEventSource }: {
     requestOldData: (fromTime?: number) => Promise<TimeData[]>;
@@ -20,6 +22,8 @@ export class DataList extends TimeList<TimeData> {
     this.#min = {};
     this.#loadingPromise = Promise.resolve();
     this.#onUpdateFunc = new Set();
+    this.#onUpdateKeyFunc = new Set();
+    this.#keys = new Set(["time"]); // timeは元から存在
   }
   addFirst(value: TimeData) {
     this.throwIfDestroyed();
@@ -27,6 +31,7 @@ export class DataList extends TimeList<TimeData> {
     const kvValue = Object.entries(value);
     this.#updateMaxValue(kvValue);
     this.#updateMinValue(kvValue);
+    this.#updateKey(kvValue);
     const res = super.addFirst(value);
     for (const fn of this.#onUpdateFunc) {
       fn();
@@ -39,6 +44,7 @@ export class DataList extends TimeList<TimeData> {
     const kvValue = Object.entries(value);
     this.#updateMaxValue(kvValue);
     this.#updateMinValue(kvValue);
+    this.#updateKey(kvValue);
     const res = super.addLast(value);
     for (const fn of this.#onUpdateFunc) {
       fn();
@@ -50,6 +56,7 @@ export class DataList extends TimeList<TimeData> {
     this.throwIfDestroyed();
     this.#updateMaxValue(Object.entries(target.#max));
     this.#updateMinValue(Object.entries(target.#min));
+    this.#updateKey(Object.entries(target.#min));
     super.margeFirst(target);
     for (const fn of this.#onUpdateFunc) {
       fn();
@@ -60,6 +67,7 @@ export class DataList extends TimeList<TimeData> {
     this.throwIfDestroyed();
     this.#updateMaxValue(Object.entries(target.#max));
     this.#updateMinValue(Object.entries(target.#min));
+    this.#updateKey(Object.entries(target.#min));
     this.#latestTime = target.#latestTime;
     super.margeLast(target);
     for (const fn of this.#onUpdateFunc) {
@@ -78,6 +86,16 @@ export class DataList extends TimeList<TimeData> {
       this.#min[key] = this.#min[key] == undefined
         ? val
         : Math.min(this.#min[key], val);
+    }
+  }
+  #updateKey(data: [string, number][]) {
+    for (const [key] of data) {
+      if (!this.#keys.has(key)) {
+        this.#keys.add(key);
+        for (const fn of this.#onUpdateKeyFunc) {
+          fn(key);
+        }
+      }
     }
   }
   getMaxVal(...keys: string[]) {
@@ -241,5 +259,15 @@ export class DataList extends TimeList<TimeData> {
     }
     signal?.addEventListener("abort", () => this.#onUpdateFunc.delete(fn));
     this.#onUpdateFunc.add(fn);
+  }
+  onKeyUpdate(
+    fn: (str: string) => void,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    if (signal?.aborted) {
+      return;
+    }
+    signal?.addEventListener("abort", () => this.#onUpdateKeyFunc.delete(fn));
+    this.#onUpdateKeyFunc.add(fn);
   }
 }

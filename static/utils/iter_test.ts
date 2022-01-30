@@ -31,6 +31,13 @@ Deno.test("iter.takeWhile", () => {
   assertEquals([...i.map((i) => i ** 2)], [0, 1]);
 });
 
+Deno.test("iter.filter", () => {
+  const i = iter([0, 1, 2, 3]).filter((i) => !(i % 2));
+  assertEquals([...i], [0, 2]);
+  assertEquals([...i], [0, 2]);
+  assertEquals([...i.filter((i) => !!(i % 2))], []);
+});
+
 Deno.test("iter.toArray", () => {
   const i = iter([0, 1, 2]).map((i) => i ** 2);
   assertEquals(i.toArray(), [0, 1, 4]);
