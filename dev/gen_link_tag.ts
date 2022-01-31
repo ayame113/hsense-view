@@ -11,12 +11,13 @@ const graph = await createGraph(FRONTEND_ENTRY_POINT.toString());
 console.log(
   graph.modules
     .map(({ specifier }) => specifier.replace(STATIC_FILE_ROOT, "/"))
-    .map((s) => `<link rel="preload" href="${s}" as="script">`).join("\n"),
+    .map((s) => `<link rel="preload" href="${s}" as="script" crossorigin>`)
+    .join("\n"),
 );
 
 /*
-<link rel="preload" href="/component/data_list.ts" as="script">
-<link rel="preload" href="/component/socket-graph-data.ts" as="script">
-<link rel="preload" href="/utils/iter.ts" as="script">
-<link rel="preload" href="/utils/list.ts" as="script">
+<link rel="preload" href="/component/data_list.ts" as="script" crossorigin>
+<link rel="preload" href="/component/socket-graph-data.ts" as="script" crossorigin>
+<link rel="preload" href="/utils/iter.ts" as="script" crossorigin>
+<link rel="preload" href="/utils/list.ts" as="script" crossorigin>
 */
