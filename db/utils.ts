@@ -1,4 +1,4 @@
-import * as hex from "https://deno.land/std@0.122.0/encoding/hex.ts";
+import * as hex from "https://deno.land/std@0.123.0/encoding/hex.ts";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

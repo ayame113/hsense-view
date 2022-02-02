@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.122.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.123.0/testing/asserts.ts";
 
 import { mockFn } from "../../static/utils/test_mock.ts";
 import { router } from "../router.ts";
