@@ -4,8 +4,6 @@ import "https://deno.land/x/dotenv@v3.1.0/load.ts";
 
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
 import {
-  deleteApp,
-  FirebaseOptions,
   initializeApp,
 } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/database/dist/database/index.d.ts"
@@ -13,7 +11,6 @@ import {
   getDatabase,
   onValue,
   ref,
-  set,
 } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
 
 const config = JSON.parse(Deno.env.get("FIREBASE_CONFIG_TEST")!);
