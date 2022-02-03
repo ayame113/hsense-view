@@ -94,14 +94,11 @@ function takeWhile(src, fn) {
   };
 }
 function filter(src, fn) {
-    return {
-        *[Symbol.iterator] () {
-            for (const val of src){
-                if (!fn(val)) {
-                    continue;
-                }
-                yield val;
-            }
+  return {
+    *[Symbol.iterator]() {
+      for (const val of src) {
+        if (!fn(val)) {
+          continue;
         }
     };
 }
