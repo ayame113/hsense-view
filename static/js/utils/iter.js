@@ -93,6 +93,7 @@ function takeWhile(src, fn) {
     },
   };
 }
+
 function filter(src, fn) {
   return {
     *[Symbol.iterator]() {
@@ -100,5 +101,8 @@ function filter(src, fn) {
         if (!fn(val)) {
           continue;
         }
-    };
+        yield val;
+      }
+    },
+  };
 }
