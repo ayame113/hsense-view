@@ -56,8 +56,8 @@ class Iter {
    * }
    * ```
    */ [Symbol.iterator]() {
-        return this.#src[Symbol.iterator]();
-    }
+    return this.#src[Symbol.iterator]();
+  }
 }
 /**
  * create iterator helper
