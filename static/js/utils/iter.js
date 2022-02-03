@@ -1,9 +1,9 @@
 class Iter {
-    #src;
-    constructor(src){
-        this.#src = src;
-    }
-    /**
+  #src;
+  constructor(src) {
+    this.#src = src;
+  }
+  /**
    * mapping iterator
    * ```ts
    * iter([0, 1, 2]).map((i)=>i ** 2).forEach(console.log) //=> 0, 1, 4
