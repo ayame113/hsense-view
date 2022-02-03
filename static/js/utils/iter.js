@@ -44,11 +44,11 @@ class Iter {
    * iter([0, 1, 2]).toArray() //=> [0, 1, 2]
    * ```
    */ toArray() {
-        return [
-            ...this.#src
-        ];
-    }
-    /**
+    return [
+      ...this.#src,
+    ];
+  }
+  /**
    * consume iterator
    * ```ts
    * for (const val of iter([0, 1, 2])) {
