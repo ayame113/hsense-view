@@ -36,7 +36,9 @@ class Iter {
     for (const val of this.#src) {
       fn(val);
     }
-    /**
+    return this;
+  }
+  /**
    * convert to Array
    * ```ts
    * iter([0, 1, 2]).toArray() //=> [0, 1, 2]
