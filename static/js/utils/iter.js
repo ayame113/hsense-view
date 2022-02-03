@@ -82,14 +82,11 @@ function map(src, fn) {
   };
 }
 function takeWhile(src, fn) {
-    return {
-        *[Symbol.iterator] () {
-            for (const val of src){
-                if (!fn(val)) {
-                    break;
-                }
-                yield val;
-            }
+  return {
+    *[Symbol.iterator]() {
+      for (const val of src) {
+        if (!fn(val)) {
+          break;
         }
     };
 }
