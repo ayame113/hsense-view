@@ -73,13 +73,13 @@ class Iter {
     return new Iter(src);
 }
 function map(src, fn) {
-    return {
-        *[Symbol.iterator] () {
-            for (const val of src){
-                yield fn(val);
-            }
-        }
-    };
+  return {
+    *[Symbol.iterator]() {
+      for (const val of src) {
+        yield fn(val);
+      }
+    },
+  };
 }
 function takeWhile(src, fn) {
     return {
