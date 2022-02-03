@@ -70,7 +70,7 @@ class Iter {
  * }
  * ```
  */ export function iter(src) {
-    return new Iter(src);
+  return new Iter(src);
 }
 function map(src, fn) {
   return {
