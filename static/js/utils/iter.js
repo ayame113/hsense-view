@@ -17,9 +17,9 @@ class Iter {
    * iter([0, 1, 2]).takeWhile((i)=>i < 2).forEach(console.log) //=> 0, 1
    * ```
    */ takeWhile(fn) {
-        return new Iter(takeWhile(this.#src, fn));
-    }
-    /**
+    return new Iter(takeWhile(this.#src, fn));
+  }
+  /**
    * filtering data
    * ```ts
    * iter([0, 1, 2]).filter((i)=>i % 2).forEach(console.log) //=> 1
