@@ -88,7 +88,10 @@ function takeWhile(src, fn) {
         if (!fn(val)) {
           break;
         }
-    };
+        yield val;
+      }
+    },
+  };
 }
 function filter(src, fn) {
     return {
