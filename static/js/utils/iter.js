@@ -25,9 +25,9 @@ class Iter {
    * iter([0, 1, 2]).filter((i)=>i % 2).forEach(console.log) //=> 1
    * ```
    */ filter(fn) {
-        return new Iter(filter(this.#src, fn));
-    }
-    /**
+    return new Iter(filter(this.#src, fn));
+  }
+  /**
    * consume iterator
    * ```ts
    * iter([0, 1, 2]).forEach(console.log) //=> 0, 1, 2
