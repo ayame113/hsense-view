@@ -9,9 +9,9 @@ class Iter {
    * iter([0, 1, 2]).map((i)=>i ** 2).forEach(console.log) //=> 0, 1, 4
    * ```
    */ map(fn) {
-        return new Iter(map(this.#src, fn));
-    }
-    /**
+    return new Iter(map(this.#src, fn));
+  }
+  /**
    * Iterates while returning true from `fn`
    * ```ts
    * iter([0, 1, 2]).takeWhile((i)=>i < 2).forEach(console.log) //=> 0, 1
