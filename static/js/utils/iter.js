@@ -33,10 +33,8 @@ class Iter {
    * iter([0, 1, 2]).forEach(console.log) //=> 0, 1, 2
    * ```
    */ forEach(fn) {
-        for (const val of this.#src){
-            fn(val);
-        }
-        return this;
+    for (const val of this.#src) {
+      fn(val);
     }
     /**
    * convert to Array
