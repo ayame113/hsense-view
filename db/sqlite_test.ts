@@ -3,8 +3,8 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.123.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.123.0/async/mod.ts";
+} from "https://deno.land/std@0.125.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.125.0/async/mod.ts";
 import { SQLiteDatabase } from "./sqlite.ts";
 
 Deno.test({
