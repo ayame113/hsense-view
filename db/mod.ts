@@ -1,4 +1,4 @@
-import { config } from "https://deno.land/x/dotenv@v3.1.0/mod.ts";
+import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 import { FirebaseRealtimeDatabase } from "./realtime_db.ts";
 // import { SQLiteDatabase } from "./sqlite3.ts";
 // import { SQLiteDatabase } from "./sqlite.ts";
