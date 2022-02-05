@@ -5,6 +5,7 @@ import {
   assertEquals,
 } from "https://deno.land/std@0.125.0/testing/asserts.ts";
 import { deadline, delay } from "https://deno.land/std@0.125.0/async/mod.ts";
+import { flakyTest } from "https://deno.land/x/flaky_test@v1.0.1/mod.ts";
 import {
   deleteAllDataForTestDoNotUse,
   FirebaseRealtimeDatabase,
@@ -16,7 +17,7 @@ Deno.test("no error accessing window.location", () => {
 
 Deno.test({
   name: "firebase realtime database",
-  fn: async () => {
+  fn: flakyTest(async () => {
     return await deadline(
       (async () => {
         const id = `test-${Math.random()}`.replaceAll(".", "");
@@ -82,7 +83,7 @@ Deno.test({
       })(),
       30 * 1000,
     );
-  },
+  }),
   // https://github.com/firebase/firebase-js-sdk/issues/5783
   sanitizeOps: false,
   sanitizeResources: false,

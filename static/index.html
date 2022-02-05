@@ -2,39 +2,120 @@
 <html lang="ja" dir="ltr">
 	<head>
 		<meta charset="utf-8">
-		<title></title>
-		<link rel="preload" href="/component/data_list.ts" as="script" crossorigin>
-		<link rel="preload" href="/component/socket-graph-data.ts" as="script" crossorigin>
-		<link rel="preload" href="/utils/iter.ts" as="script" crossorigin>
-		<link rel="preload" href="/utils/list.ts" as="script" crossorigin>
+		<title>socket-graph</title>
 		<link rel="stylesheet" href="/style/main.css">
-		<script src="/component/socket-graph-data.ts" charset="utf-8" type="module"></script>
+		<script src="/component/socket-graph-form.ts" charset="utf-8" type="module"></script>
+		<style>
+			main>*{
+				padding: 1em;
+			}
+			main>* h3{
+				margin: 0.5em 0;
+				border-bottom: 1px solid gray;
+			}
+			main>* h3::before{
+				content: "";
+				display: inline-block;
+				width: 0.8em;
+				height: 0.8em;
+				border-radius: 0.4em;
+				background-color: purple;
+				margin-right: 0.2em;
+			}
+			pre{
+				background-color: whitesmoke;
+				box-shadow: inset 3px 3px 10px -3px grey;
+				padding: 0.5em;
+				overflow-x: scroll;
+				border-radius: 0.5em;
+			}
+			code{
+				background-color: whitesmoke;
+				padding: 0.3em;
+			}
+			pre>code{
+				background-color: transparent;
+				padding: 0;
+			}
+		</style>
 	</head>
 	<body>
 		<header>
 			<h1>＜タイトル＞</h1>
 		</header>
-		<main></main>
-		<footer>フッター</footer>
+		<main>
+			<div>
+				<h3>利用方法</h3>
+				このサイトは、WebSocketを通してデータを送信することで、ブラウザでリアルタイムに更新されるグラフを作成することができるサービスです。
+				<h4>グラフを見たい場合</h4>
+				<ol>
+					<li>「グラフ表示」欄に表示したいグラフIDを入力する。</li>
+					<li>「表示」ボタンを押すと、グラフが表示されます。</li>
+				</ol>
+				<h4>グラフを作成したい場合</h4>
+				<ol>
+					<li>「アクセストークン取得」からアクセストークンを取得します。</li>
+					<li>「グラフデータの送信方法」を参考に、WebSocketでサーバーにデータを送信します。</li>
+				</ol>
+			</div>
+			<socket-graph-form-view-graph></socket-graph-form-view-graph>
+			<socket-graph-form-token></socket-graph-form-token>
+			<div>
+				<h3>グラフデータの送信方法</h3>
+				<ol>
+					<li>WebSocketを使って<code>wss://socket-graph.deno.dev/ws/send/＜グラフID＞</code>に接続します。</li>
+					<li>接続が開始されたら、最初の1回目の送信でアクセストークンを送信します。</li>
+					<li>
+						2回目以降は、グラフに表示したい値をJSONに変換し、送信します。<br>
+						JSONデータは以下のフォーマットに従う必要があります。
+						<ol>
+							<li><code>time</code>プロパティに、UnixTimeで時刻を指定します。（この値がグラフの横軸の値になります。）</li>
+							<li>その他の任意のプロパティに、値を指定します。（この値がグラフの縦軸の値になります。）プロパティ名がフラフの系列の名前になります。</li>
+						</ol>
+						例：<code>{"time": 1643853565613, "data1": 0.5}</code>を送信した場合→横軸の値が1643853565613(UnixTime)で、縦軸の系列<code>data1</code>の値が0.5としてプロットされます。
+					</li>
+					<li>データの送信を止めたい場合は、WebSocketの接続を閉じます。</li>
+				</ol>
+				コード例（JavaScript）
+				<pre><code>const delay = (ms) => new Promise((ok) => setTieout(ok));
+const ID = "＜あなたが指定したID＞";
+const TOKEN = "＜IDをもとに取得したトークン＞";
+
+// 送信はWebSocketで行う
+const socket = new WebSocket(`wss://socket-graph.deno.dev/ws/send/${ID}`);
+
+// WebSocketのコネクションが開かれるまで待つ
+await new Promise((ok) => socket.addEventListener("open", ok));
+
+// 最初にトークンを送信
+socket.send(TOKEN);
+
+setInterval(()=>{
+  const time = Date.now(); // 現在時刻を取得
+  // 送信するデータはtimeプロパティ(現在時刻)と任意のプロパティ(値)のペア
+  const data = {
+    time,
+    i: Math.sin(time / 5000),
+    "-i": -Math.sin(time / 5000),
+  };
+  console.log(data);
+
+  // WebSocketを通してJSONデータを送信
+  socket.send(JSON.stringify(data));
+}, 1000); // 1秒に1回送信する</code></pre>
+			</div>
+			<div>
+				<h3>不具合報告・連絡先</h3>
+				<ul>
+					<li><a href="https://github.com/ayame113/socket-graph">GitHub</a></li>
+				</ul>
+			</div>
+		</main>
+		<footer>
+			<h3>socket graph</h3>
+			<ul>
+				<li><a href="./">TOP</a></li>
+			</ul>
+		</footer>
 	</body>
-	<script type="module">
-		const id = new URL(location.href).searchParams.get("id");
-		if (!id) {
-			console.error("グラフを表示できません");
-			// alert("グラフを表示できません");
-			// location.href = "/"
-		}
-		const main = document.querySelector("main");
-		const graph = document.createElement("socket-graph-data");
-		graph.setAttribute("data-source-url", `/api/data/${id}?fromTime=%fromTime%&limit=%limit%`);
-		graph.setAttribute("data-source-streaming-url", `/sse/data/${id}`);
-		main.appendChild(graph);
-		const drower = document.createElement("socket-graph-drower");
-		main.appendChild(drower);
-	</script>
-	<script>
-		window.addEventListener("load", ()=>{
-			console.log("performance.now", performance.now())
-		})
-	</script>
 </html>

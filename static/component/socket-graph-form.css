@@ -1,0 +1,23 @@
+:host{
+	display: block;
+	padding: 1em;
+}
+h3{
+	margin: 0.5em 0;
+	border-bottom: 1px solid gray;
+}
+h3::before{
+	content: "";
+	display: inline-block;
+	width: 0.8em;
+	height: 0.8em;
+	border-radius: 0.4em;
+	background-color: purple;
+	margin-right: 0.2em;
+}
+.error{
+	color: red;
+}
+textarea{
+	width: 275px;
+}
