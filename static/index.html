@@ -77,7 +77,7 @@
 					<li>データの送信を止めたい場合は、WebSocketの接続を閉じます。</li>
 				</ol>
 				コード例（JavaScript）
-				<pre><code>const delay = (ms) => new Promise((ok) => setTieout(ok));
+				<pre><code>const delay = (ms) => new Promise((ok) => setTieout(ok, ms));
 const ID = "＜あなたが指定したID＞";
 const TOKEN = "＜IDをもとに取得したトークン＞";
 
@@ -115,6 +115,8 @@ setInterval(()=>{
 			<h3>socket graph</h3>
 			<ul>
 				<li><a href="./">TOP</a></li>
+				<li><a href="./playground.html">playground</a></li>
+				<li><a href="https://github.com/ayame113/socket-graph/">GitHub</a></li>
 			</ul>
 		</footer>
 	</body>

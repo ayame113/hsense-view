@@ -226,9 +226,10 @@ class GraphElement extends HTMLElement {
     this.#shouldRender = true;
   };
   connectedCallback() {
-    const table = createElement("table");
+    const buttons = createElement("div");
+    buttons.classList.add("buttons");
     for (const keyName of this.#keys) {
-      table.appendChild(
+      buttons.appendChild(
         selectGraphDataButton(keyName, this.#colorRegistry.get(keyName), {
           onCheck: (v) => {
             if (v) {
@@ -245,7 +246,7 @@ class GraphElement extends HTMLElement {
         }),
       );
     }
-    this.#headerElement = createElement("div", null, null, [table]);
+    this.#headerElement = createElement("div", null, null, [buttons]);
     this.appendChild(this.#headerElement);
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
@@ -261,7 +262,7 @@ class GraphElement extends HTMLElement {
     this.#list.onUpdate(() => this.#shouldRender = true, controller);
     this.#list.onKeyUpdate((keyName) => {
       this.#keys.add(keyName);
-      table.appendChild(
+      buttons.appendChild(
         selectGraphDataButton(keyName, this.#colorRegistry.get(keyName), {
           onCheck: (v) => {
             if (v) {
@@ -504,11 +505,8 @@ function selectGraphDataButton(
     onUpdateColor(color: string): void;
   },
 ) {
-  createElement("input").addEventListener("change", (e) => {
-    e.currentTarget;
-  });
-  return createElement("tr", null, null, [
-    createElement("td", null, null, [
+  return createElement("div", null, null, [
+    createElement("span", null, null, [
       createElement("label", null, null, [
         createElement("input", { type: "checkbox", checked: true }, (e) => {
           e.addEventListener("change", (e) => {
@@ -518,7 +516,7 @@ function selectGraphDataButton(
         keyName,
       ]),
     ]),
-    createElement("td", null, null, [
+    createElement("span", null, null, [
       createElement("input", { type: "color" }, (e) => {
         e.value = cssColorToColorCode(color);
         e.addEventListener("change", (e) => {

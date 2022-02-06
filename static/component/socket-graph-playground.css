@@ -1,0 +1,22 @@
+socket-graph-playground{
+	display: block;
+	padding: 0.5em;
+}
+.playground-editor{
+	width: 100%;
+	height: 40vh;
+	border: 1px solid gray;
+	border-top: 1em solid whitesmoke;
+}
+.playground-output{
+	border-top: 1em solid dodgerblue;
+}
+.playground-button{
+	line-height: 2.8em;
+	width: 6em;
+}
+.playground-iframe{
+	width: 100%;
+	height: 20vh;
+	border: 1px solid gray;
+}
