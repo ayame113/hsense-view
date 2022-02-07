@@ -37,8 +37,8 @@
 			throw new Error("id not found");
 		}
 		const graph = document.createElement("socket-graph-data");
-		graph.setAttribute("data-source-url", `/api/data/${id}?fromTime=%fromTime%&limit=%limit%`);
-		graph.setAttribute("data-source-streaming-url", `/sse/data/${id}`);
+		graph.setAttribute("data-source-url", new URL(`/api/data/${id}?fromTime=%fromTime%&limit=%limit%`, location.href));
+		graph.setAttribute("data-source-streaming-url", new URL(`/sse/data/${id}`, location.href));
 		main.appendChild(graph);
 		const drower = document.createElement("socket-graph-drower");
 		main.appendChild(drower);

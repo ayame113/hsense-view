@@ -113,9 +113,8 @@ class DataElement extends HTMLElement {
     }
     const text = [
       `<script src="${import.meta.url}" type="module"></script>`,
-      this.outerHTML,
-    ]
-      .join("\n");
+      `<socket-graph-data data-source-url="${this.attr.sourceUrl}" data-source-streaming-url="${this.attr.sourceStreamingUrl}"></socket-graph-data>`,
+    ].join("\n");
     this.#shadow.appendChild(createElement("div", null, (wrapper) => {
       this.#embedTagElement = wrapper;
       let textarea: HTMLTextAreaElement | undefined;
