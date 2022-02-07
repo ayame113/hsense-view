@@ -45,8 +45,8 @@
 		const main = document.querySelector("main");
 
 		const graph = document.createElement("socket-graph-data");
-		graph.setAttribute("data-source-url", `/api/data/${id}?fromTime=%fromTime%&limit=%limit%`);
-		graph.setAttribute("data-source-streaming-url", `/sse/data/${id}`);
+		graph.setAttribute("data-source-url", new URL(`/api/data/${id}?fromTime=%fromTime%&limit=%limit%`, location.href));
+		graph.setAttribute("data-source-streaming-url", new URL(`/sse/data/${id}`, location.href));
 		main.appendChild(graph);
 
 		const playground = document.createElement("socket-graph-playground");
