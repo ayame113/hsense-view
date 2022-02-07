@@ -1,4 +1,4 @@
-import { Database } from "https://deno.land/x/sqlite3@0.3.0/mod.ts";
+import { Database } from "https://deno.land/x/sqlite3@0.3.1/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.125.0/fs/mod.ts";
 import { delay } from "https://deno.land/std@0.125.0/async/mod.ts";
 
