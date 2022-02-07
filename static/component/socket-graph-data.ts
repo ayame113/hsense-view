@@ -111,7 +111,10 @@ class DataElement extends HTMLElement {
       this.#embedTagElement = undefined;
       return;
     }
-    const text = [`<script src="${import.meta.url}">`, this.outerHTML]
+    const text = [
+      `<script src="${import.meta.url}" type="module"></script>`,
+      this.outerHTML,
+    ]
       .join("\n");
     this.#shadow.appendChild(createElement("div", null, (wrapper) => {
       this.#embedTagElement = wrapper;

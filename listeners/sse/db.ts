@@ -20,6 +20,10 @@ router.GET.set(
         channel?.close();
       },
     });
-    return { body, contentType: "text/event-stream; charset=utf-8" };
+    return {
+      body,
+      contentType: "text/event-stream; charset=utf-8",
+      cors: true,
+    };
   },
 );

@@ -50,6 +50,7 @@ router.GET.set(
       return {
         body: JSON.stringify({ success: false, data: null }),
         type: ".json",
+        cors: true,
       };
     }
   },

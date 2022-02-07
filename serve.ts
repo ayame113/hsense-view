@@ -19,13 +19,16 @@ function contentTypeFromExt(extension?: Extension) {
 }
 
 async function createResponse(src: RouterResult) {
-  let { body, status, contentType, type } = await src;
+  let { body, status, contentType, type, cors } = await src;
   body = body instanceof DomTag ? body.toString() : body;
   body ||= `${status} ${STATUS_TEXT.get(status ?? 200)}`;
   contentType ||= contentTypeFromExt(type);
+  const corsHeader: HeadersInit = cors
+    ? { "Access-Control-Allow-Origin": "*" }
+    : {};
   return new Response(body, {
     status,
-    headers: { "Content-Type": contentType },
+    headers: { "Content-Type": contentType, ...corsHeader },
   });
 }
 

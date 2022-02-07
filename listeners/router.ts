@@ -22,11 +22,13 @@ export type RouterResult = PromiseOrValue<
     status?: Status;
     contentType?: string;
     type?: Extension;
+    cors?: boolean;
   } | {
     body?: BodyInit | ReturnType<typeof html>;
     status: Status;
     contentType?: string;
     type?: Extension;
+    cors?: boolean;
   }
 >;
 
