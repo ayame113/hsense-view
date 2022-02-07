@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<script src="/component/socket-graph-playground.ts" charset="utf-8" type="module"></script>
+		<script src="/component/socket-graph-data.ts" charset="utf-8" type="module"></script>
+		<link rel="stylesheet" href="/style/main.css">
+		<style>
+			@media (min-width: 750px) {
+				main{
+					display: flex;
+				}
+				main>*{
+					width: 45%;
+				}
+				main>*:first-child{
+					order: 2;
+				}
+				main>*:last-child{
+					order: 1;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>playground</h1>
+		</header>
+		<main>
+		</main>
+		<footer>
+			<ul>
+				<li><a href="./">TOP</a></li>
+				<li><a href="./playground.html">playground</a></li>
+				<li><a href="https://github.com/ayame113/socket-graph/">GitHub</a></li>
+			</ul>
+		</footer>
+	</body>
+	<script type="module">
+		let id
+		try {
+			id = crypto.randomUUID();
+		} catch(e) {
+			id = `${Math.random()}`.slice(2);
+		}
+		const main = document.querySelector("main");
+
+		const graph = document.createElement("socket-graph-data");
+		graph.setAttribute("data-source-url", new URL(`/api/data/${id}?fromTime=%fromTime%&limit=%limit%`, location.href));
+		graph.setAttribute("data-source-streaming-url", new URL(`/sse/data/${id}`, location.href));
+		main.appendChild(graph);
+
+		const playground = document.createElement("socket-graph-playground");
+		playground.setAttribute("data-id", id);
+		fetch(`/api/create_token/${id}`).then(res=>res.json())
+		.then(({success, token})=>{
+			if (!success) {
+				throw new Error("トークンの読み込みに失敗しました")
+			}
+			playground.setAttribute("data-token", token);
+		})
+		main.appendChild(playground);
+	</script>
+</html>

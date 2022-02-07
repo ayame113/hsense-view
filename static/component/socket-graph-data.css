@@ -16,3 +16,38 @@ socket-graph-data-inner canvas {
 socket-graph-data-inner label{
 	display: block;
 }
+.buttons{
+	display: flex;
+	flex-wrap: wrap;
+}
+.buttons>div{
+	margin: 0.3em;
+	border-radius: 0.25em;
+}
+.buttons>div:hover{
+	background-color: antiquewhite;
+}
+.buttons>div>span{
+	display: inline-block;
+	padding: 0.2em;
+}
+.buttons label,
+.buttons input{
+	cursor: pointer;
+}
+.bottom-buttons{
+	padding: 0;
+	margin-left: 0;
+	display: block;
+}
+.copy-button{
+	cursor: pointer;
+	display: inline-block;
+	border: 1px solid gray;
+	padding: 0.2em;
+	border-radius: 0.5em;
+	user-select: none;
+}
+.copy-button:hover{
+	background-color: gainsboro;
+}

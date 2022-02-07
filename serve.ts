@@ -8,6 +8,9 @@ import { router, socketRouter } from "./listeners/router.ts";
 import type { Extension, RouterResult } from "./listeners/router.ts";
 import { DomTag } from "./static/utils/domtag.ts";
 
+import AllowCORS from "./allow_cors.json" assert { type: "json" };
+const AllowCORSSet = new Set(AllowCORS);
+
 function contentTypeFromPath(path: string) {
   return contentType(extname(path) ?? ".txt") ?? "text/plain; charset=utf-8";
 }
@@ -16,13 +19,16 @@ function contentTypeFromExt(extension?: Extension) {
 }
 
 async function createResponse(src: RouterResult) {
-  let { body, status, contentType, type } = await src;
+  let { body, status, contentType, type, cors } = await src;
   body = body instanceof DomTag ? body.toString() : body;
   body ||= `${status} ${STATUS_TEXT.get(status ?? 200)}`;
   contentType ||= contentTypeFromExt(type);
+  const corsHeader: HeadersInit = cors
+    ? { "Access-Control-Allow-Origin": "*" }
+    : {};
   return new Response(body, {
     status,
-    headers: { "Content-Type": contentType },
+    headers: { "Content-Type": contentType, ...corsHeader },
   });
 }
 
@@ -39,7 +45,6 @@ export function tsToJs(content: string) {
   } as any).code;
 }
 
-const decoder = new TextDecoder(); // TODO: remove
 async function handleHttpRequest(request: Request) {
   try {
     const url = new URL(request.url);
@@ -49,23 +54,26 @@ async function handleHttpRequest(request: Request) {
         if (pathname.at(-1) === "/") {
           pathname += "index.html";
         }
-        /*const response = await fetch(
-          new URL(`./static${pathname}`, import.meta.url),
-        );*/
-        const content = await Deno.readFile(
+        const response = await fetch(
           new URL(`./static${pathname}`, import.meta.url),
         );
+        const corsHeader: HeadersInit = AllowCORSSet.has(pathname)
+          ? { "Access-Control-Allow-Origin": "*" }
+          : {};
         try {
           if (extname(pathname) === ".ts") {
-            return new Response(
-              tsToJs(/*await response.text()*/ decoder.decode(content)),
-              {
-                headers: { "Content-Type": contentTypeFromExt(".js") },
+            return new Response(tsToJs(await response.text()), {
+              headers: {
+                "Content-Type": contentTypeFromExt(".js"),
+                ...corsHeader,
               },
-            );
+            });
           } else {
-            return new Response(/*response.body*/ content, {
-              headers: { "Content-Type": contentTypeFromPath(pathname) },
+            return new Response(response.body, {
+              headers: {
+                "Content-Type": contentTypeFromPath(pathname),
+                ...corsHeader,
+              },
             });
           }
         } catch (error) {
