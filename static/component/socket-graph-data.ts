@@ -122,7 +122,7 @@ class DataElement extends HTMLElement {
       wrapper.append(
         createElement("textarea", null, (e) => {
           e.style.width = "80%";
-          e.style.height = "3em";
+          e.style.height = "4em";
           textarea = e;
         }, [text]),
         createElement("button", null, (button) => {
