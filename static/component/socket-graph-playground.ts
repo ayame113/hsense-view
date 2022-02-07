@@ -142,6 +142,8 @@ function send() {
 		time,
 		sin: Math.sin(time / 5000),
 		"-sin": -Math.sin(time / 5000),
+		// cos: Math.cos(time / 5000),
+		// "-cos": -Math.cos(time / 5000),
 	};
 	console.log(JSON.stringify(data));
 

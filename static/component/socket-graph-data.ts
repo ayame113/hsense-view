@@ -93,6 +93,46 @@ class DataElement extends HTMLElement {
         { width: 200, height: 400 },
       ),
     );
+    this.#shadow.appendChild(createElement("ul", null, (e) => {
+      e.classList.add("bottom-buttons");
+    }, [
+      createElement("li", null, (e) => {
+        e.classList.add("copy-button");
+        e.addEventListener("click", () => {
+          this.toggleEmbedTag();
+        });
+      }, ["</>"]),
+    ]));
+  }
+  #embedTagElement?: HTMLDivElement;
+  toggleEmbedTag() {
+    if (this.#embedTagElement) {
+      this.#embedTagElement.remove();
+      this.#embedTagElement = undefined;
+      return;
+    }
+    const text = [`<script src="${import.meta.url}">`, this.outerHTML]
+      .join("\n");
+    this.#shadow.appendChild(createElement("div", null, (wrapper) => {
+      this.#embedTagElement = wrapper;
+      let textarea: HTMLTextAreaElement | undefined;
+      wrapper.append(
+        createElement("textarea", null, (e) => {
+          e.style.width = "80%";
+          e.style.height = "3em";
+          textarea = e;
+        }, [text]),
+        createElement("button", null, (button) => {
+          button.addEventListener("click", () => {
+            textarea?.select();
+            navigator.clipboard.writeText(text).then(
+              () => button.innerText = "copy✅",
+              () => button.innerText = "copy✖",
+            );
+          });
+        }, ["copy"]),
+      );
+    }));
   }
 }
 

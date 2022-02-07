@@ -15,7 +15,14 @@
 			<h1>＜タイトル＞</h1>
 		</header>
 		<main></main>
-		<footer>フッター</footer>
+		<footer>
+			<h3>socket graph</h3>
+			<ul>
+				<li><a href="./">TOP</a></li>
+				<li><a href="./playground.html">playground</a></li>
+				<li><a href="https://github.com/ayame113/socket-graph/">GitHub</a></li>
+			</ul>
+		</footer>
 	</body>
 	<script type="module">
 		const id = new URL(location.href).searchParams.get("id");
@@ -27,7 +34,7 @@
 			const div = document.createElement("div");
 			div.innerText = "グラフを表示できません。"
 			main.appendChild(div);
-			throw new Erroe("id not found");
+			throw new Error("id not found");
 		}
 		const graph = document.createElement("socket-graph-data");
 		graph.setAttribute("data-source-url", `/api/data/${id}?fromTime=%fromTime%&limit=%limit%`);

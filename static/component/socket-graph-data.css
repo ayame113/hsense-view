@@ -35,3 +35,19 @@ socket-graph-data-inner label{
 .buttons input{
 	cursor: pointer;
 }
+.bottom-buttons{
+	padding: 0;
+	margin-left: 0;
+	display: block;
+}
+.copy-button{
+	cursor: pointer;
+	display: inline-block;
+	border: 1px solid gray;
+	padding: 0.2em;
+	border-radius: 0.5em;
+	user-select: none;
+}
+.copy-button:hover{
+	background-color: gainsboro;
+}
