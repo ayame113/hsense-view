@@ -75,13 +75,13 @@ export class SQLiteDatabase implements DatabaseInterface {
     const token = crypto.randomUUID();
     const hashedToken = await hash(token);
     const db = await SQLiteResources.getDB(id, this.#timeout);
-    let result: string | null = null;
-    const data = db.queryArray("select hash from hash where id = 'id'");
-    if (!data.length) {
+    try {
       db.queryArray("INSERT INTO hash VALUES ('id', ?)", hashedToken);
-      result = token;
+      return token;
+    } catch {
+      // uniqe idが重複したらエラーが出る
+      return null;
     }
-    return result;
   }
   async testToken(id: string, token: string) {
     const db = await SQLiteResources.getDB(id, this.#timeout);

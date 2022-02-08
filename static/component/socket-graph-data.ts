@@ -101,7 +101,7 @@ class DataElement extends HTMLElement {
         e.addEventListener("click", () => {
           this.toggleEmbedTag();
         });
-      }, ["</>"]),
+      }, ["</>埋め込み"]),
     ]));
   }
   #embedTagElement?: HTMLDivElement;
