@@ -27,12 +27,15 @@ while (true) {
     socket.send(TOKEN);
 
     const wait = 1000;
+    let pre流量 = 0;
     while (true) {
       await delay(wait);
       const time = Date.now();
       const 瞬時流量origin = 7000 < time % 14000 ? 0.9 : 0.1;
       const 瞬時流量 = 瞬時流量origin + Math.random() * 0.1;
-      積算流量 += 瞬時流量 * (wait / 1000 / 3600); // 1秒は(1/3600)時間
+      // 台形補正
+      // 1秒は(1/3600)時間（台形の面積）
+      積算流量 += (pre流量 + 瞬時流量) / 2 * (wait / 1000 / 3600);
       const data = {
         time,
         "積算流量（m^3）": 積算流量,
@@ -40,6 +43,7 @@ while (true) {
       };
       console.log(data);
       socket.send(JSON.stringify(data));
+      pre流量 = 瞬時流量;
     }
   } catch (error) {
     console.log(error);
