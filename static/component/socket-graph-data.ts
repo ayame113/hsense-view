@@ -156,6 +156,7 @@ class GraphElement extends HTMLElement {
   #resizeObserver: ResizeObserver;
   #colorRegistry: ColorRegistry;
   #headerElement?: HTMLDivElement;
+  #dataOutputElement?: HTMLDivElement;
   #footerElement?: HTMLDivElement;
   constructor(
     dataList: DataList,
@@ -179,6 +180,7 @@ class GraphElement extends HTMLElement {
       const height = (entry.contentBoxSize?.[0]?.blockSize ??
         entry.contentRect.height) -
         (this.#headerElement?.clientHeight ?? 0) -
+        (this.#dataOutputElement?.clientHeight ?? 0) -
         (this.#footerElement?.clientHeight ?? 0) - 10;
       const width = (entry.contentBoxSize?.[0]?.inlineSize ??
         entry.contentRect.width) - 2; // border分引く
@@ -290,6 +292,8 @@ class GraphElement extends HTMLElement {
     }
     this.#headerElement = createElement("div", null, null, [buttons]);
     this.appendChild(this.#headerElement);
+    this.#dataOutputElement = createElement("div");
+    this.appendChild(this.#dataOutputElement);
     this.#canvasElement = document.createElement("canvas");
     this.#canvasElement.height = 0;
     this.#canvasElement.width = 0;
@@ -301,7 +305,30 @@ class GraphElement extends HTMLElement {
     this.#footerElement = createElement("div", null, null, ["a"]);
     this.appendChild(this.#footerElement);
     const controller = new AbortController();
-    this.#list.onUpdate(() => this.#shouldRender = true, controller);
+    this.#list.onUpdate(() => {
+      this.#shouldRender = true;
+      if (this.#dataOutputElement) {
+        if (this.#isTrackingRealtimeData) {
+          this.#dataOutputElement.innerHTML = Object
+            .entries(this.#list.last.value ?? {})
+            .filter(([k]) => k !== "time")
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("<br>");
+        } else {
+          this.#dataOutputElement.innerHTML = "";
+        }
+        // 要素追加に合わせて高さ更新
+        const height = this.clientHeight -
+          (this.#headerElement?.clientHeight ?? 0) -
+          (this.#dataOutputElement?.clientHeight ?? 0) -
+          (this.#footerElement?.clientHeight ?? 0) - 10;
+        const preHeight = this.#position.height;
+        this.#position.height = height;
+        if (this.#canvasElement && preHeight !== height) {
+          this.#canvasElement.height = height;
+        }
+      }
+    }, controller);
     this.#list.onKeyUpdate((keyName) => {
       this.#keys.add(keyName);
       buttons.appendChild(
@@ -323,6 +350,7 @@ class GraphElement extends HTMLElement {
       // 要素追加に合わせて高さ更新
       const height = this.clientHeight -
         (this.#headerElement?.clientHeight ?? 0) -
+        (this.#dataOutputElement?.clientHeight ?? 0) -
         (this.#footerElement?.clientHeight ?? 0) - 10;
       this.#position.height = height;
       if (this.#canvasElement) {
