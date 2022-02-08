@@ -4,8 +4,11 @@ import {
   assertEquals,
 } from "https://deno.land/std@0.125.0/testing/asserts.ts";
 import { deadline, delay } from "https://deno.land/std@0.125.0/async/mod.ts";
-import { SQLiteDatabase } from "./sqlite3.ts";
+import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 
+// configAscyncじゃなくて同期バージョンを使う必要がある（deploy不可）
+config({ export: true });
+const { SQLiteDatabase } = await import("./sqlite3.ts");
 Deno.test({
   name: "sqlite3",
   fn: async () => {
@@ -16,6 +19,7 @@ Deno.test({
 
         const token = await db.createToken(id);
         assert(token, "failed to get token");
+        assertEquals(await db.createToken(id), null);
         assert(!await db.testToken(id, "wrong token was passed"));
         assert(await db.testToken(id, token), "token is wrong");
 
