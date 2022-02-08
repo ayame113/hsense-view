@@ -535,7 +535,7 @@ class GraphElement extends HTMLElement {
         });
         if (this.#footerElement) {
           this.#footerElement
-            .innerHTML = `[${formatUnixTimeToDate(oldestTime)}]`;
+            .innerText = `[${formatUnixTimeToDate(oldestTime)}]`;
         }
       }
       this.#shouldRender = false;
