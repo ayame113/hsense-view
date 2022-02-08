@@ -33,6 +33,7 @@ while (true) {
       const time = Date.now();
       const 瞬時流量origin = 7000 < time % 14000 ? 0.9 : 0.1;
       const 瞬時流量 = 瞬時流量origin + Math.random() * 0.1;
+      // 台形補正
       // 1秒は(1/3600)時間（台形の面積）
       積算流量 += (pre流量 + 瞬時流量) / 2 * (wait / 1000 / 3600);
       const data = {
