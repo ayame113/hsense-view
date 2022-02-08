@@ -309,11 +309,16 @@ class GraphElement extends HTMLElement {
       this.#shouldRender = true;
       if (this.#dataOutputElement) {
         if (this.#isTrackingRealtimeData) {
-          this.#dataOutputElement.innerHTML = Object
-            .entries(this.#list.last.value ?? {})
+          this.#dataOutputElement.innerHTML = "";
+          Object.entries(this.#list.last.value ?? {})
             .filter(([k]) => k !== "time")
             .map(([k, v]) => `${k}: ${v}`)
-            .join("<br>");
+            .forEach((text, i) => {
+              if (i !== 0) {
+                this.#dataOutputElement!.append(createElement("br"));
+              }
+              this.#dataOutputElement!.append(text);
+            });
         } else {
           this.#dataOutputElement.innerHTML = "";
         }
