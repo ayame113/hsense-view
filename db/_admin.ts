@@ -16,23 +16,15 @@ import {
 //} from "https://cdn.skypack.dev/firebase-admin@10.0.2/app/index";
 //} from "https://jspm.dev/firebase-admin@10.0.0/app";
 /*
+import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
+config({ export: true });
 
-import * as admin from "https://esm.sh/firebase-admin@10.0.2/app";
-console.log(admin);
+import { initializeApp } from "https://esm.sh/firebase-admin@10.0.2/app";
+import { getDatabase } from "https://esm.sh/firebase-admin@10.0.2/database";
+const app = initializeApp();
+console.log(app);
 
-const {
-  credential,
-  initializeApp,
-} = admin;
-
-* /
-// ENVから読む
-const cert = {
-  projectId: Deno.env.get("FIREBASE_PROJECT_ID"),
-  clientEmail: Deno.env.get("FIREBASE_CLIENT_EMAIL"),
-  privateKey: Deno.env.get("FIREBASE_PRIVATE_KEY")!.replace(/\\n/g, "\n"),
-};
-initializeApp({
-  credential: credential.cert(cert),
-});
+const db = getDatabase();
+const ref = db.ref("hello");
+ref.set("aaa");
 */
