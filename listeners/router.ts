@@ -47,8 +47,11 @@ type WebSocketRouterArg = {
 };
 
 export const router = {
+  /** GETメゾット用のルーター */
   GET: new Router<RouterArg, RouterResult>(),
+  /** POSTメゾット用のルーター */
   POST: new Router<RouterArg, RouterResult>(),
+  /** DELETEメゾット用のルーター */
   DELETE: new Router<RouterArg, RouterResult>(),
 };
 

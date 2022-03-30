@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    // サーバー起動
+    "serve": "deno run --allow-net -
+-allow-read=. --allow-env --allow-ffi --unstable --watch ./serve
+.ts"
+  }
+}

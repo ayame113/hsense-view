@@ -38,12 +38,19 @@ const DEFAULT_TIMEOUT = 120000;
  * dbプロパティに一定期間アクセスが無い場合は接続を切断する
  */
 class FirebaseResources {
+  /** firebase config */
   #options: FirebaseOptions;
+  /** firebaseを操作するクラス */
   #app: FirebaseApp;
+  /** データベースへの参照 */
   #db: Database;
+  /** 接続切断に使うsetTimeoutのtimeoutId */
   #wakeUpTimeoutId?: number;
+  /** 何秒間接続が無ければ接続を切断するか */
   #wakeUpTimeout: number;
+  /** DB接続が生きているかどうか */
   #awake: boolean;
+  /** DB接続を閉じたい時に、このdeffredをresolveする */
   #destructPromise: Deferred<void>;
   constructor(options: FirebaseOptions, { timeout }: { timeout: number }) {
     this.#options = options;
@@ -54,10 +61,15 @@ class FirebaseResources {
     this.#awake = true;
     this.#destructPromise = deferred();
   }
+  /** dbを取得するプロパティ */
   get db() {
     this.#wakeUp();
     return this.#db;
   }
+  /**
+   * DBへの読み書きが発生するたびにこの関数が呼ばれる
+   * 一定期間この関数が呼ばれない場合、destructor()を呼びDBとの接続を切断する
+   */
   #wakeUp() {
     if (!this.#awake) {
       // wake up
@@ -72,6 +84,10 @@ class FirebaseResources {
       this.#wakeUpTimeout,
     );
   }
+  /**
+   * 終了時に呼ばれる関数
+   * constructorと対になっている
+   */
   async destructor() {
     if (this.#awake) {
       this.#awake = false;
@@ -104,6 +120,7 @@ class FirebaseResources {
   }
 }
 
+/** firebase realtime databaseを操作するクラス */
 export class FirebaseRealtimeDatabase implements DatabaseInterface {
   #resources: FirebaseResources;
   constructor(
@@ -118,6 +135,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
     }
     this.#resources = new FirebaseResources(options, { timeout });
   }
+  /** データベース接続を破棄する */
   async cleanUp() {
     await this.#resources.destructor();
   }
@@ -196,6 +214,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
     data.forEach((val) => (res.push(val.val()), false));
     return res.reverse();
   }
+  /** 引数に渡した時刻より古いデータを削除する */
   async deleteDataByTime(time: number) {
     //古いほうから取得して、timeを超えるまでnullを書き込む
     const resultPromises: Promise<void>[] = [];
@@ -220,6 +239,10 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
   }
 }
 
+/**
+ * データを書き込むためのクラス
+ * getWriter()の戻り値
+ */
 class Writer implements WriterInterface {
   readonly #getRef: () => DatabaseReference;
   constructor(resources: FirebaseResources, id: string) {
@@ -227,6 +250,7 @@ class Writer implements WriterInterface {
       return ref(resources.db, `graphList/${id}`);
     });
   }
+  /** データを書き込む */
   async write(data: { time: number; [key: string]: number }) {
     if (typeof data.time !== "number") {
       return; // TODO: エラーハンドリング
@@ -235,6 +259,7 @@ class Writer implements WriterInterface {
   }
 }
 
+/** テスト用 データベースのデータを全部削除する。使うな！！ */
 export async function deleteAllDataForTestDoNotUse(
   initializeOption: FirebaseOptions,
   id: string,

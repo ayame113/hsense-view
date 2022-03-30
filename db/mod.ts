@@ -7,18 +7,16 @@ import { isDeploy } from "./utils.ts";
 let database: Database;
 try {
   if (isDeploy()) {
+    // deno deployで動かしている場合はfirebaseを使う
     database = new FirebaseRealtimeDatabase(
+      // 環境変数に入っているFIREBASE_CONFIGを使用して初期化
       JSON.parse(Deno.env.get("FIREBASE_CONFIG")!),
     );
   } else {
+    // deploy以外で動かしている場合はsqliteを使う
     // configAscyncじゃなくて同期バージョンを使う必要がある（deploy不可）
     config({ export: true });
-    const importAvoidDeployError = new Function(
-      "specifier",
-      "return import(specifier)",
-    );
-    // 動的importが使えない
-    const { SQLiteDatabase } = await importAvoidDeployError("./sqlite3.ts");
+    const { SQLiteDatabase } = await import("./sqlite3.ts");
     database = new SQLiteDatabase();
   }
 } catch (error) {
