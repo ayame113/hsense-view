@@ -1,7 +1,7 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.125.0/testing/asserts.ts";
+} from "https://deno.land/std@0.132.0/testing/asserts.ts";
 
 import { TimeList } from "./list.ts";
 
