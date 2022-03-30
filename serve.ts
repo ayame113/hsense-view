@@ -147,4 +147,5 @@ export function startServer() {
 
 if (import.meta.main) {
   startServer();
+  console.log("http://localhost:8000/");
 }

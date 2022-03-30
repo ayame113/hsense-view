@@ -1,15 +1,28 @@
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
+/// <reference lib="dom.asynciterable" />
+
 import { type ListElement, TimeList } from "../utils/list.ts";
 
 export type TimeData = { time: number; [key: string]: number };
 
+/** グラフ表示用のデータを保存するクラス（双方向連結リストを拡張） */
 export class DataList extends TimeList<TimeData> {
-  #max: { [key: string]: number };
-  #min: { [key: string]: number };
+  /** キーごとの最大値 */
+  #max: { [key: string]: number }; // グラフの大きさを決めるために使用
+  /** キーごとの最小値 */
+  #min: { [key: string]: number }; // グラフの大きさを決めるために使用
+  /** 過去データを取得する関数 */
   #requestOldData: (fromTime?: number) => Promise<TimeData[]>;
+  /** リアルタイムデータを取得するためのEventSourceを取得する関数 */
   #getEventSource: () => EventSource;
+  /** データの更新が行われた時に呼び出す関数のリスト */
   #onUpdateFunc: Set<() => void>;
+  /** データに新しいキーが追加された時に呼び出す関数のリスト */
   #onUpdateKeyFunc: Set<(str: string) => void>;
+  /** キーのリスト */
   #keys: Set<string>;
+  /** データがないかどうか */
   empty = true;
   constructor({ requestOldData, getEventSource }: {
     requestOldData: (fromTime?: number) => Promise<TimeData[]>;
@@ -25,6 +38,7 @@ export class DataList extends TimeList<TimeData> {
     this.#onUpdateKeyFunc = new Set();
     this.#keys = new Set(["time"]); // timeは元から存在
   }
+  /** 先頭にデータを追加 */
   addFirst(value: TimeData) {
     this.throwIfDestroyed();
     this.empty = true;
@@ -38,6 +52,7 @@ export class DataList extends TimeList<TimeData> {
     }
     return res;
   }
+  /** 末尾にデータを追加 */
   addLast(value: TimeData) {
     this.throwIfDestroyed();
     this.empty = true;
@@ -51,6 +66,7 @@ export class DataList extends TimeList<TimeData> {
     }
     return res;
   }
+  /** 先頭に別のリストを連結 */
   margeFirst(target: DataList) {
     this.empty = this.empty || target.empty;
     this.throwIfDestroyed();
@@ -62,6 +78,7 @@ export class DataList extends TimeList<TimeData> {
       fn();
     }
   }
+  /** 末尾に別のリストを連結 */
   margeLast(target: DataList) {
     this.empty = this.empty || target.empty;
     this.throwIfDestroyed();
@@ -76,6 +93,7 @@ export class DataList extends TimeList<TimeData> {
       fn();
     }
   }
+  /** 最大値データをアップデート */
   #updateMaxValue(data: [string, number][]) {
     for (const [key, val] of data) {
       this.#max[key] = this.#max[key] == undefined
@@ -83,6 +101,7 @@ export class DataList extends TimeList<TimeData> {
         : Math.max(this.#max[key], val);
     }
   }
+  /** 最小値データをアップデート */
   #updateMinValue(data: [string, number][]) {
     for (const [key, val] of data) {
       this.#min[key] = this.#min[key] == undefined
@@ -90,22 +109,26 @@ export class DataList extends TimeList<TimeData> {
         : Math.min(this.#min[key], val);
     }
   }
+  /** データのキーの一覧を更新 */
   #updateKey(data: [string, number][]) {
     for (const [key] of data) {
       if (!this.#keys.has(key)) {
         this.#keys.add(key);
+        // 新しいキーが追加されたらonUpdateKeyFuncを呼び出す
         for (const fn of this.#onUpdateKeyFunc) {
           fn(key);
         }
       }
     }
   }
+  /** 最大値を取得 */
   getMaxVal(...keys: string[]) {
     const val = keys.map((key) => this.#max[key]).filter((v) => v !== null);
     if (val.length) {
       return Math.max(...val);
     }
   }
+  /** 最小値を取得 */
   getMinVal(...keys: string[]) {
     const val = keys.map((key) => this.#min[key]).filter((v) => v !== null);
     if (val.length) {
@@ -249,7 +272,9 @@ export class DataList extends TimeList<TimeData> {
     }
     return pointer;
   }
+  /** リアルタイム通信を行うEventSource */
   #eventSource?: EventSource;
+  /** リアルタイム通信を開始する */
   startStreaming() {
     if (!this.#eventSource) {
       this.#eventSource = this.#getEventSource();
@@ -276,11 +301,13 @@ export class DataList extends TimeList<TimeData> {
       });
     }
   }
+  /** リアルタイム通信を終わらせる */
   stopStreaming() {
     this.#eventSource?.close();
     this.#eventSource = undefined;
     this.#latestTime = Date.now();
   }
+  /** データ追加時に呼ばれるコールバック関数を登録する */
   onUpdate(fn: () => void, { signal }: { signal?: AbortSignal } = {}) {
     if (signal?.aborted) {
       return;
@@ -288,6 +315,7 @@ export class DataList extends TimeList<TimeData> {
     signal?.addEventListener("abort", () => this.#onUpdateFunc.delete(fn));
     this.#onUpdateFunc.add(fn);
   }
+  /** 新しいキーの追加時に呼ばれるコールバック関数を登録する */
   onKeyUpdate(
     fn: (str: string) => void,
     { signal }: { signal?: AbortSignal } = {},

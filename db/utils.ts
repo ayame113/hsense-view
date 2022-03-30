@@ -9,6 +9,7 @@ export async function hash(message: string) {
   return decoder.decode(hex.encode(new Uint8Array(hashBuffer)));
 }
 
+/** deno deployで実行されているかどうかを判定 */
 export function isDeploy() {
   try {
     return !!Deno.env.get("DENO_DEPLOYMENT_ID");
