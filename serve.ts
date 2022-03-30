@@ -1,6 +1,6 @@
-import { serve, STATUS_TEXT } from "https://deno.land/std@0.125.0/http/mod.ts";
-import { extname } from "https://deno.land/std@0.125.0/path/mod.ts";
-import { contentType } from "https://deno.land/x/media_types@v2.12.1/mod.ts";
+import { serve, STATUS_TEXT } from "https://deno.land/std@0.132.0/http/mod.ts";
+import { extname } from "https://deno.land/std@0.132.0/path/mod.ts";
+import { contentType } from "https://deno.land/x/media_types@v3.0.2/mod.ts";
 import { transform } from "https://deno.land/x/swc@0.1.4/mod.ts";
 
 import "./listeners/mod.ts";

@@ -3,8 +3,8 @@ import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.125.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.125.0/async/mod.ts";
+} from "https://deno.land/std@0.132.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.132.0/async/mod.ts";
 import { flakyTest } from "https://deno.land/x/flaky_test@v1.0.1/mod.ts";
 import {
   deleteAllDataForTestDoNotUse,

@@ -1,6 +1,6 @@
 // リモート計測コード
 
-import { delay } from "https://deno.land/std@0.125.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.132.0/async/delay.ts";
 
 // const res = await fetch("https://socket-graph.deno.dev/api/create_token/koiwa");
 // console.log(await res.json());

@@ -2,8 +2,8 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.125.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.125.0/async/mod.ts";
+} from "https://deno.land/std@0.132.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.132.0/async/mod.ts";
 import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 
 // configAscyncじゃなくて同期バージョンを使う必要がある（deploy不可）

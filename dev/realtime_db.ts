@@ -1,6 +1,6 @@
 // 計測用コード
 
-import { delay } from "https://deno.land/std@0.125.0/async/delay.ts";
+import { delay } from "https://deno.land/std@0.132.0/async/delay.ts";
 import "https://deno.land/x/dotenv@v3.2.0/load.ts";
 
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
