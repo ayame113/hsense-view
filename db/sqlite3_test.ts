@@ -4,10 +4,8 @@ import {
   assertEquals,
 } from "https://deno.land/std@0.132.0/testing/asserts.ts";
 import { deadline, delay } from "https://deno.land/std@0.132.0/async/mod.ts";
-import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
+import "https://deno.land/std@0.132.0/dotenv/load.ts";
 
-// configAscyncじゃなくて同期バージョンを使う必要がある（deploy不可）
-config({ export: true });
 const { SQLiteDatabase } = await import("./sqlite3.ts");
 Deno.test({
   name: "sqlite3",

@@ -16,8 +16,7 @@ import {
 //} from "https://cdn.skypack.dev/firebase-admin@10.0.2/app/index";
 //} from "https://jspm.dev/firebase-admin@10.0.0/app";
 /*
-import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
-config({ export: true });
+import "https://deno.land/std@0.132.0/dotenv/load.ts";
 
 import { initializeApp } from "https://esm.sh/firebase-admin@10.0.2/app";
 import { getDatabase } from "https://esm.sh/firebase-admin@10.0.2/database";

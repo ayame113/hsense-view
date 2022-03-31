@@ -39,8 +39,10 @@ jobs:
       - name: 😎 Test
         env:
           FIREBASE_CONFIG_TEST: ${{secrets.FIREBASE_CONFIG_TEST}}
+          FIREASE_AUTH_ADMIN_EMAIL: ${{secrets.FIREASE_AUTH_ADMIN_EMAIL}}
+          FIREASE_AUTH_ADMIN_PASSWORD: ${{secrets.FIREASE_AUTH_ADMIN_PASSWORD}}
           #DENO_SQLITE_PATH: "./db/sqlite_dll/sqlite3.dll"
-        run: deno test --allow-net --allow-env=FIREBASE_CONFIG_TEST,DENO_SQLITE_PATH --allow-read=. --allow-write=. --allow-ffi --unstable --coverage=coverage --jobs
+        run: deno test --allow-net --allow-env=FIREBASE_CONFIG_TEST,DENO_SQLITE_PATH,FIREASE_AUTH_ADMIN_EMAIL,FIREASE_AUTH_ADMIN_PASSWORD --allow-read=. --allow-write=. --allow-ffi --unstable --coverage=coverage --jobs
       - name: Create coverage report
         run: deno coverage ./coverage --lcov > coverage.lcov
       - name: Codecov

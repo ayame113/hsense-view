@@ -1,4 +1,4 @@
-import "https://deno.land/x/dotenv@v3.2.0/load.ts";
+import "https://deno.land/std@0.132.0/dotenv/load.ts";
 
 import * as hex from "https://deno.land/std@0.132.0/encoding/hex.ts";
 // @deno-types="https://cdn.esm.sh/v57/firebase@9.4.1/app/dist/app/index.d.ts"
