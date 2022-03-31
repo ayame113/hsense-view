@@ -93,6 +93,7 @@ class FirebaseResources {
       this.#awake = true;
       this.#destructPromise = deferred();
       const authPromise = auth(this.#app, this.#email, this.#password);
+      // 場合によっては破棄済みのDBを取得しようとしてエラー？
       this.#db = authPromise.then(() => getDatabase(this.#app));
     }
     this.#wakeUpTimeoutId = setTimeout(

@@ -50,7 +50,7 @@ https://socket-graph.deno.dev
 2. deno deployの環境変数（deno deployにログインして設定）
 3. GitHub Actionsの環境変数（GitHubにログインして設定→secret→Actionsで追加）
 
-の3種を必要に応じて設定・追加する。
+の3種を必要に応じて設定・追加する。必要に応じて`.github/workflow/ci.yml`の中にあるテストコマンドも変更する
 
 ### LICENSE
 
