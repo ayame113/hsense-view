@@ -24,6 +24,10 @@ import {
   runTransaction,
   set,
 } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+} from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
 
 import type {
   Database as DatabaseInterface,
@@ -43,7 +47,7 @@ class FirebaseResources {
   /** firebaseを操作するクラス */
   #app: FirebaseApp;
   /** データベースへの参照 */
-  #db: Database;
+  #db: Promise<Database>;
   /** 接続切断に使うsetTimeoutのtimeoutId */
   #wakeUpTimeoutId?: number;
   /** 何秒間接続が無ければ接続を切断するか */
@@ -52,14 +56,25 @@ class FirebaseResources {
   #awake: boolean;
   /** DB接続を閉じたい時に、このdeffredをresolveする */
   #destructPromise: Deferred<void>;
-  constructor(options: FirebaseOptions, { timeout }: { timeout: number }) {
+  /** ログイン用のemail */
+  #email: string;
+  /** ログイン用のパスワード */
+  #password: string;
+  constructor(
+    options: FirebaseOptions,
+    { email, password }: { email: string; password: string },
+    { timeout }: { timeout: number },
+  ) {
     this.#options = options;
     this.#wakeUpTimeout = timeout;
+    this.#email = email;
+    this.#password = password;
     // wake up
-    this.#app = initializeApp(options);
-    this.#db = getDatabase(this.#app);
+    this.#app = initializeApp(this.#options);
     this.#awake = true;
     this.#destructPromise = deferred();
+    const authPromise = auth(this.#app, this.#email, this.#password);
+    this.#db = authPromise.then(() => getDatabase(this.#app));
   }
   /** dbを取得するプロパティ */
   get db() {
@@ -71,14 +86,15 @@ class FirebaseResources {
    * 一定期間この関数が呼ばれない場合、destructor()を呼びDBとの接続を切断する
    */
   #wakeUp() {
+    clearTimeout(this.#wakeUpTimeoutId);
     if (!this.#awake) {
       // wake up
       this.#app = initializeApp(this.#options);
-      this.#db = getDatabase(this.#app);
       this.#awake = true;
       this.#destructPromise = deferred();
+      const authPromise = auth(this.#app, this.#email, this.#password);
+      this.#db = authPromise.then(() => getDatabase(this.#app));
     }
-    clearTimeout(this.#wakeUpTimeoutId);
     this.#wakeUpTimeoutId = setTimeout(
       () => this.destructor(),
       this.#wakeUpTimeout,
@@ -125,6 +141,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
   #resources: FirebaseResources;
   constructor(
     options: FirebaseOptions,
+    auth: { email: string; password: string },
     { logging = false, timeout = DEFAULT_TIMEOUT }: {
       logging?: boolean;
       timeout?: number;
@@ -133,7 +150,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
     if (logging) {
       enableLogging(console.log);
     }
-    this.#resources = new FirebaseResources(options, { timeout });
+    this.#resources = new FirebaseResources(options, auth, { timeout });
   }
   /** データベース接続を破棄する */
   async cleanUp() {
@@ -144,7 +161,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
    * 既に紐づいたトークンが存在している場合はnullを返します。
    */
   async createToken(id: string): Promise<string | null> {
-    const dataRef = ref(this.#resources.db, `tokenList/${id}`);
+    const dataRef = ref(await this.#resources.db, `tokenList/${id}`);
     let result: string | null = null;
     const token = crypto.randomUUID();
     const hashedToken = await hash(token);
@@ -164,7 +181,7 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
   /** idとトークンの組み合わせが正しいか照合します。 */
   async testToken(id: string, token: string): Promise<boolean> {
     const [res, expectedHashedToken] = await Promise.all([
-      get(ref(this.#resources.db, `tokenList/${id}`)),
+      get(ref(await this.#resources.db, `tokenList/${id}`)),
       hash(token),
     ]);
     return res.exists() && res.val()?.hashedToken === expectedHashedToken;
@@ -194,15 +211,16 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
     id: string,
     { limit = 50, fromTime }: { limit?: number; fromTime?: number } = {},
   ) {
+    const db = await this.#resources.db;
     const dataRef = (() => {
       if (fromTime == undefined) {
         return query(
-          ref(this.#resources.db, `graphList/${id}`),
+          ref(db, `graphList/${id}`),
           limitToLast(limit),
         );
       } else {
         return query(
-          ref(this.#resources.db, `graphList/${id}`),
+          ref(db, `graphList/${id}`),
           orderByChild("time"),
           endAt(fromTime, "time"),
           limitToLast(limit),
@@ -218,9 +236,10 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
   async deleteDataByTime(time: number) {
     //古いほうから取得して、timeを超えるまでnullを書き込む
     const resultPromises: Promise<void>[] = [];
-    (await get(ref(this.#resources.db, "tokenList"))).forEach(({ key }) => {
+    const db = await this.#resources.db;
+    (await get(ref(db, "tokenList"))).forEach(({ key }) => {
       const dataRef = query(
-        ref(this.#resources.db, `graphList/${key}`),
+        ref(db, `graphList/${key}`),
         orderByChild("time"),
         endAt(time, "time"),
       );
@@ -244,27 +263,37 @@ export class FirebaseRealtimeDatabase implements DatabaseInterface {
  * getWriter()の戻り値
  */
 class Writer implements WriterInterface {
-  readonly #getRef: () => DatabaseReference;
+  readonly #getRef: () => Promise<DatabaseReference>;
   constructor(resources: FirebaseResources, id: string) {
-    this.#getRef = resources.link((resources) => {
-      return ref(resources.db, `graphList/${id}`);
+    this.#getRef = resources.link(async (resources) => {
+      return ref(await resources.db, `graphList/${id}`);
     });
   }
   /** データを書き込む */
   async write(data: { time: number; [key: string]: number }) {
     if (typeof data.time !== "number") {
+      console.warn("writting db was ignored");
       return; // TODO: エラーハンドリング
     }
-    await push(this.#getRef(), data);
+    await push(await this.#getRef(), data);
   }
+}
+
+/** (開発者用のダミーアカウントで)ログインする */
+async function auth(app: FirebaseApp, email: string, password: string) {
+  // データーベースには認証が通った人しか書き込めないようになっているので、この関数を呼んで認証する。
+  const auth = getAuth(app);
+  await signInWithEmailAndPassword(auth, email, password);
 }
 
 /** テスト用 データベースのデータを全部削除する。使うな！！ */
 export async function deleteAllDataForTestDoNotUse(
   initializeOption: FirebaseOptions,
   id: string,
+  { email, password }: { email: string; password: string },
 ) {
   const app = initializeApp(initializeOption);
+  await auth(app, email, password);
   const db = getDatabase(app);
   await set(ref(db, `graphList/${id}`), null);
   await set(ref(db, `tokenList/${id}`), null);

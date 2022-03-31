@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import "https://deno.land/x/dotenv@v3.2.0/load.ts";
+import "https://deno.land/std@0.132.0/dotenv/load.ts";
 import {
   assert,
   assertEquals,
@@ -24,26 +24,32 @@ Deno.test({
         const initializeOption = JSON.parse(
           Deno.env.get("FIREBASE_CONFIG_TEST")!,
         );
-        await deleteAllDataForTestDoNotUse(initializeOption, id);
-        await delay(5000);
-        const db = new FirebaseRealtimeDatabase(initializeOption, {
-          logging: false,
-          timeout: 1000,
+        const email = Deno.env.get("FIREASE_AUTH_ADMIN_EMAIL")!;
+        const password = Deno.env.get("FIREASE_AUTH_ADMIN_PASSWORD")!;
+        await deleteAllDataForTestDoNotUse(initializeOption, id, {
+          email,
+          password,
         });
+        await delay(5000);
+        const db = new FirebaseRealtimeDatabase(
+          initializeOption,
+          { email, password },
+          { logging: false, timeout: 5000 },
+        );
 
         const token = await db.createToken(id);
         assert(token, "failed to get token");
         assert(!await db.testToken(id, "wrong token was passed"));
         assert(await db.testToken(id, token), "token is wrong");
 
-        await delay(2000); // 適切にwakeUpされることを確認する
+        await delay(10000); // 適切にwakeUpされることを確認する
 
         const writer = await db.getWriter(id, token);
         assert(writer, "writer is null");
         for (let i = 0; i < 10; i++) {
           await writer.write({ time: i, content: `i: ${i}` as any });
         }
-        await delay(2000); // 適切にwakeUpされることを確認する
+        await delay(10000); // 適切にwakeUpされることを確認する
         await writer.write({ time: 10, content: `i: 10` as any });
 
         assertEquals(await db.getDataByLimit(id, { fromTime: 4 }), [
@@ -77,11 +83,14 @@ Deno.test({
         assertEquals(await db.getDataByLimit(id), []);
         await db.cleanUp();
         await delay(5000);
-        await deleteAllDataForTestDoNotUse(initializeOption, id);
+        await deleteAllDataForTestDoNotUse(initializeOption, id, {
+          email,
+          password,
+        });
         await delay(5000);
         console.log("fin");
       })(),
-      30 * 1000,
+      60 * 1000,
     );
   }),
   // https://github.com/firebase/firebase-js-sdk/issues/5783
