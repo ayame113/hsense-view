@@ -61,7 +61,12 @@ https://socket-graph.deno.dev
 - テスト用のファイル
 - `deno test <ファイル名>`コマンドでテストを実行できる。全てのテストに合格することが期待される。
 
-## 開発方法
+## サーバーの開発方法
+
+### エディタの設定
+
+https://deno.land/manual@main/getting_started/setup_your_environment
+このへんを参考に、エディタの拡張機能をインストールする必要あり
 
 ### サーバー立ち上げ
 
@@ -94,3 +99,22 @@ deno run --allow-net -
 
 ※GitHubのファイルのページに行き、rawボタンを押してrawファイルを開く。そのURLをコピーして https://doc.deno.land
 に入力するとドキュメントが表示される。
+
+## 開発を引き継ぐ場合のアカウント等の取り扱い
+
+- Webサイトとして公開する場合
+  - GitHubアカウント・deno deployアカウント・Firebaseアカウントの3つが必要です。ない場合は新しく作ってください。
+  - https://github.com/ayame113/socket-graph の開発を引き継ぐことになります。
+  - 方法1：リポジトリを転送します。deno deployやfirebaseのprojectも転送するので、
+    https://github.com/ayame113/socket-graph/issues などから@ayame113
+    に連絡ください。（多分こっちで手続きが必要なので）
+  - 方法2：リポジトリをforkします（forkボタンを押す）。deno deployに再登録する必要があります。deno
+    deployに登録して、`./serve.ts`をエントリポイントとして設定してください。
+  - deno deployのプロジェクトも転送する必要があります。
+- Webサイトとして公開しない場合
+  - ここのコードをそのままコピーして使ってください。
+
+サーバー側は弄らずに、測定機器の送信だけをやる場合は、上記の手続きは不要です。 https://socket-graph.deno.dev/
+の説明を読んでください。
+
+わからないことがあれば https://github.com/ayame113/socket-graph/issues にコメントするか直接聞いてください
