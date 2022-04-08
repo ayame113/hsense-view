@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { assertEquals } from "https://deno.land/std@0.132.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.134.0/testing/asserts.ts";
 
 import { router } from "../router.ts";
 import "./example.ts";
