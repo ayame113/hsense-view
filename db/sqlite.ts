@@ -1,6 +1,6 @@
-import { DB as Database } from "https://deno.land/x/sqlite@v3.3.0/mod.ts";
-import { ensureDir } from "https://deno.land/std@0.134.0/fs/mod.ts";
-import { delay } from "https://deno.land/std@0.134.0/async/mod.ts";
+import { DB as Database } from "https://deno.land/x/sqlite@v3.4.0/mod.ts";
+import { ensureDir } from "https://deno.land/std@0.140.0/fs/mod.ts";
+import { delay } from "https://deno.land/std@0.140.0/async/mod.ts";
 
 import { hash } from "./utils.ts";
 import type {

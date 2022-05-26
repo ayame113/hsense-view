@@ -1,10 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
-import "https://deno.land/std@0.134.0/dotenv/load.ts";
+import "https://deno.land/std@0.140.0/dotenv/load.ts";
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.134.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.134.0/async/mod.ts";
+} from "https://deno.land/std@0.140.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.140.0/async/mod.ts";
 import { flakyTest } from "https://deno.land/x/flaky_test@v1.0.1/mod.ts";
 import {
   deleteAllDataForTestDoNotUse,

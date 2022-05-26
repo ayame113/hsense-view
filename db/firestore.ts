@@ -1,9 +1,9 @@
-import "https://deno.land/std@0.134.0/dotenv/load.ts";
+import "https://deno.land/std@0.140.0/dotenv/load.ts";
 
-import * as hex from "https://deno.land/std@0.134.0/encoding/hex.ts";
+import * as hex from "https://deno.land/std@0.140.0/encoding/hex.ts";
 // @deno-types="https://cdn.esm.sh/v57/firebase@9.4.1/app/dist/app/index.d.ts"
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.4.1/firebase-app.js";
-//import { initializeApp } from "https://cdn.skypack.dev/firebase@9.6.10/app";
+//import { initializeApp } from "https://cdn.skypack.dev/firebase@9.8.2-20220525182114/app";
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.4.1/firestore/dist/firestore/index.d.ts"
 import {
   collection,
@@ -20,7 +20,7 @@ import {
   where,
   WriteBatch,
   writeBatch,
-  //} from "https://cdn.skypack.dev/firebase@9.6.10/firestore";
+  //} from "https://cdn.skypack.dev/firebase@9.8.2-20220525182114/firestore";
 } from "https://www.gstatic.com/firebasejs/9.4.1/firebase-firestore-lite.js";
 
 const firebaseConfig = JSON.parse(Deno.env.get("FIREBASE_CONFIG")!);
