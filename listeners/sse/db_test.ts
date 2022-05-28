@@ -2,7 +2,7 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.134.0/testing/asserts.ts";
+} from "https://deno.land/std@0.141.0/testing/asserts.ts";
 
 import { router } from "../router.ts";
 import "./db.ts";
