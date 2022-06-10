@@ -1,4 +1,4 @@
-import { Deferred, deferred } from "https://deno.land/std@0.134.0/async/mod.ts";
+import { Deferred, deferred } from "https://deno.land/std@0.143.0/async/mod.ts";
 
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
 import {

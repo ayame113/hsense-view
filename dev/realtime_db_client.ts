@@ -1,6 +1,6 @@
 // 計測用コード
 
-import "https://deno.land/std@0.134.0/dotenv/load.ts";
+import "https://deno.land/std@0.143.0/dotenv/load.ts";
 
 // @deno-types="https://cdn.esm.sh/v58/firebase@9.6.0/app/dist/app/index.d.ts"
 import {
