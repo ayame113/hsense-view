@@ -1,4 +1,4 @@
-import { delay } from "https://deno.land/std@0.134.0/async/mod.ts";
+import { delay } from "https://deno.land/std@0.143.0/async/mod.ts";
 
 // websocketで送信するやつ
 const id = "sakura";
