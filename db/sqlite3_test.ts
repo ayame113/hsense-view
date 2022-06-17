@@ -2,9 +2,9 @@
 import {
   assert,
   assertEquals,
-} from "https://deno.land/std@0.134.0/testing/asserts.ts";
-import { deadline, delay } from "https://deno.land/std@0.134.0/async/mod.ts";
-import "https://deno.land/std@0.134.0/dotenv/load.ts";
+} from "https://deno.land/std@0.144.0/testing/asserts.ts";
+import { deadline, delay } from "https://deno.land/std@0.144.0/async/mod.ts";
+import "https://deno.land/std@0.144.0/dotenv/load.ts";
 
 const { SQLiteDatabase } = await import("./sqlite3.ts");
 Deno.test({
