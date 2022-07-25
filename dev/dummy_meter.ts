@@ -1,4 +1,4 @@
-import { delay } from "https://deno.land/std@0.134.0/async/mod.ts";
+import { delay } from "https://deno.land/std@0.149.0/async/mod.ts";
 
 // TODO:
 // closeしたときに再接続

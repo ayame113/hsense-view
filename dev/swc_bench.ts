@@ -1,6 +1,6 @@
 // 計測用コード
 
-import { transform } from "https://deno.land/x/swc@0.1.4/mod.ts";
+import { transform } from "https://deno.land/x/swc@0.2.1/mod.ts";
 
 const content = await Deno.readTextFile("./serve.ts");
 export function tsToJs(content: string) {
