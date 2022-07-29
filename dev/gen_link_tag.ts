@@ -4,7 +4,7 @@ const FRONTEND_ENTRY_POINT = new URL(
   "./component/socket-graph-data.ts",
   STATIC_FILE_ROOT,
 );
-import { createGraph } from "https://deno.land/x/deno_graph@0.26.0/mod.ts";
+import { createGraph } from "https://deno.land/x/deno_graph@0.29.0/mod.ts";
 
 const graph = await createGraph(FRONTEND_ENTRY_POINT.toString());
 
